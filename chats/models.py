@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 
 class ChatRoom(models.Model):
@@ -12,7 +13,13 @@ class ChatRoom(models.Model):
             return self.name or "Unnamed Group Chat"
         else:
             users = self.participants.all()
-            return f"Chat between {users[0].username} and {users[1].username}"
+            participants_count = users.count()
+            if participants_count == 0:
+                return "Empty Chat"
+            elif participants_count == 1:
+                return f"Chat with {users[0].username}"
+            else:
+                return f"Chat Between {users[0].username} and {users[1].username}"
 
 
 class Message(models.Model):
@@ -24,3 +31,13 @@ class Message(models.Model):
     
     def __str__(self):
         return f"Message from {self.sender.username} in {self.chat_room}"
+    
+    def clean(self):
+        super().clean()
+        if not self.content or not self.content.strip():
+            raise ValidationError("Message content cannot be empty.")
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        
