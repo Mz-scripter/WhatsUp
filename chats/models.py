@@ -30,7 +30,8 @@ class Message(models.Model):
     is_anonymous = models.BooleanField(default=False)
     
     def __str__(self):
-        return f"Message from {self.sender.username} in {self.chat_room}"
+        sender_display = "Anonymous" if self.is_anonymous else self.sender.username
+        return f"Message from {sender_display} in {self.chat_room}"
     
     def clean(self):
         super().clean()
