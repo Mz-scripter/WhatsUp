@@ -42,3 +42,6 @@ class Message(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
         
+    def get_sender_display(self):
+        return "Anonymous" if self.is_anonymous else self.sender.username
+        
