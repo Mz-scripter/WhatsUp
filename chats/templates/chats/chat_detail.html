@@ -4,10 +4,24 @@
 
 {% block content %}
     <h1>Chat Room: {{ chat_room }}</h1>
-    <h2>Participants:</h2>
-    <ul>
-        {% for participant in chat_room.participants.all %}
-            <li>{{ participant.username }}</li>
+    <div class="messages">
+        {% for message in messages %}
+            <div class="message">
+                <strong>{{ message.get_sender_display }}</strong>
+                <p>{{ message.content }}</p>
+                <small>{{ message.timestamp }}</small>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.content.label_tag }} {{ form.content }}
+        {% if chat_room.is_group_chat %}
+            <div>
+                {{ form.is_anonymous }} {{ form.anonymous.label_tag }}
+            </div>
+        {% endif %}
+        <button type="submit">Send</button>
+    </form>
 {% endblock %}
