@@ -34,7 +34,7 @@ def login_view(request):
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})
 
-def logout(request):
+def logout_view(request):
     logout(request)
     messages.info(request, "You have been logged out.")
     return redirect('login')
