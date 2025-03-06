@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Group Chat{% endblock %}
+
+{% block content %}
+    <h1>Create Group Chat</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="group_name">Group Name:</label>
+        <input type="text" id="group_name" name="group_name" required>
+        <button type="submit">Create</button>
+    </form>
+{% endblock %}

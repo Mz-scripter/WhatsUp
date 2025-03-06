@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat Room{% endblock %}
+
+{% block content %}
+    <h1>Chat Room: {{ chat_room }}</h1>
+    <h2>Participants:</h2>
+    <ul>
+        {% for participant in chat_room.participants.all %}
+            <li>{{ participant.username }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
