@@ -30,27 +30,13 @@ def chat_list(request):
 @login_required
 def chat_detail(request, chat_room_id):
     chat_room = ChatRoom.objects.get(id=chat_room_id)
-    
     if request.user not in chat_room.participants.all():
         return HttpResponseForbidden("You are not a participant in this chat room.")
-    
-    if request.method == 'POST':
-        form = MessageForm(request.POST)
-        if form.is_valid():
-            message = form.save(commit=False)
-            message.chat_room = chat_room
-            message.sender = request.user
-            if not chat_room.is_group_chat:
-                message.is_anonymous = False
-            message.save()
-            return redirect('chat_detail', chat_room_id=chat_room.id)
-    else:
-        form = MessageForm()
-    
-    messages = chat_room.messages.order_by('timestamp')
+    chat_messages = chat_room.messages.order_by('timestamp')
+    form = MessageForm()
     context = {
         'chat_room': chat_room,
-        'messages': messages,
+        'chat_messages': chat_messages,
         'form': form,
     }
     return render(request, 'chats/chat_detail.html', context)

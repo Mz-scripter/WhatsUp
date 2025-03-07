@@ -4,7 +4,7 @@
 
 {% block content %}
     <h1>Chat Room: {{ chat_room }}</h1>
-    <div class="messages">
+    <div id="messages" class="messages">
         {% for message in messages %}
             <div class="message">
                 <strong>{{ message.get_sender_display }}</strong>
@@ -14,7 +14,7 @@
         {% endfor %}
     </div>
 
-    <form method="POST">
+    <form id="message-form">
         {% csrf_token %}
         {{ form.content.label_tag }} {{ form.content }}
         {% if chat_room.is_group_chat %}
@@ -24,4 +24,45 @@
         {% endif %}
         <button type="submit">Send</button>
     </form>
+
+    <script>
+        const roomId = {{ chat_room.id }};
+        const userId = {{ request.user.id }};
+        const chatSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/chat/' + roomId + '/'
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const messagesDiv = document.getElementById('messages');
+            const newMessage = document.createElement('div');
+            newMessage.classList.add('message');
+            newMessage.innerHTML = `
+                <strong>${data.sender}</strong>
+                <p>${data.message}</p>
+                <small>${data.timestamp}</small>
+            `;
+            messagesDiv.appendChild(newMessage);
+        };
+
+        chatSocket.onerror = function(e) {
+            console.error('WebSocket error:', e);
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('WebSocket closed unexpectedly');
+        };
+
+        document.getElementById('message-form').onsubmit = function(e) {
+            e.preventDefault();
+            const messageInput = document.querySelector('#id_content');
+            const isAnonymous = document.querySelector('#id_is_anonymous')?.checked || false;
+            chatSocket.send(JSON.stringify({
+                'message': messageInput.value,
+                'sender_id': userId,
+                'is_anonymous': isAnonymous
+            }));
+            messageInput.value = '';
+        };
+    </script>
 {% endblock %}
