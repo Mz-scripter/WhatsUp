@@ -2,6 +2,25 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .models import Message, ChatRoom
 from django.contrib.auth.models import User
+from channels.db import database_sync_to_async
+
+
+@database_sync_to_async
+def get_chat_room(room_id):
+    return ChatRoom.objects.get(id=room_id)
+
+@database_sync_to_async
+def get_user(user_id):
+    return User.objects.get(id=user_id)
+
+@database_sync_to_async
+def create_message(chat_room, sender, content, is_anonymous):
+    return Message.objects.create(
+        chat_room=chat_room,
+        sender=sender,
+        content=content,
+        is_anonymous=is_anonymous
+    )
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -27,12 +46,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message_content = text_data_json['message']
         sender_id = text_data_json['sender_id']
-        is_anonymous = text_data_json('is_anonymous', False)
+        is_anonymous = text_data_json.get('is_anonymous', False)
         
         # Save message to database
-        sender = User.objects.get(id=sender_id)
-        chat_room = ChatRoom.objects.get(id=self.room_id)
-        msg = Message.objects.create(
+        sender = await get_user(sender_id)
+        chat_room = await get_chat_room(self.room_id)
+        msg = await create_message(
             chat_room=chat_room,
             sender=sender,
             content=message_content,
