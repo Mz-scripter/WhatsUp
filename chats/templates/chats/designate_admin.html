@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Designate Admin{% endblock %}
+
+{% block content %}
+    <h1>Designate Admin for {{ chat_room.name }}</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <select name="user_id">
+            {% for participant in participants %}
+                <option value="{{ participant.id }}">{{ participant.username }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Promote to Admin</button>
+    </form>
+{% endblock %}

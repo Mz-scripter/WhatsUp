@@ -7,6 +7,8 @@ class ChatRoom(models.Model):
     name = models.CharField(max_length=255, blank=True, null=True)
     is_group_chat = models.BooleanField(default=False)
     participants = models.ManyToManyField(User, related_name='chat_rooms')
+    admins = models.ManyToManyField(User, related_name='admin_chat_rooms', blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_chat_rooms', null=True)
     
     def __str__(self):
         if self.is_group_chat:

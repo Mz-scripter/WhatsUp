@@ -57,6 +57,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             content=message_content,
             is_anonymous=is_anonymous and chat_room.is_group_chat
         )
+        timestamp_str = msg.timestamp.strftime("%I:%M%p")
+        formatted_time = timestamp_str.lstrip('0')
         
         # Send message to room group
         await self.channel_layer.group_send(
@@ -65,7 +67,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'chat_message',
                 'message': msg.content,
                 'sender': msg.get_sender_display(),
-                'timestamp': msg.timestamp.isoformat()
+                'timestamp': formatted_time
             }
         )
     
