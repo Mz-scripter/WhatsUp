@@ -30,6 +30,7 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_anonymous = models.BooleanField(default=False)
+    read_by = models.ManyToManyField(User, related_name='read_messages', blank=True)
     
     def __str__(self):
         sender_display = "Anonymous" if self.is_anonymous else self.sender.username

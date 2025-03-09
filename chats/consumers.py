@@ -60,6 +60,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         timestamp_str = msg.timestamp.strftime("%I:%M%p")
         formatted_time = timestamp_str.lstrip('0')
         
+        await database_sync_to_async(msg.read_by.add)(sender)
+        
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -67,7 +69,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'chat_message',
                 'message': msg.content,
                 'sender': msg.get_sender_display(),
-                'timestamp': formatted_time
+                'timestamp': formatted_time,
+                'read_by': [sender.id]
             }
         )
     
@@ -76,5 +79,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': event['message'],
             'sender': event['sender'],
-            'timestamp': event['timestamp']
+            'timestamp': event['timestamp'],
+            'read_by': event['read_by']
         }))
