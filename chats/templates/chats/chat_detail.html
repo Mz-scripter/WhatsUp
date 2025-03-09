@@ -24,6 +24,12 @@
                 <strong>{{ message.get_sender_display }}</strong>
                 <p>{{ message.content }}</p>
                 <small>{{ message.timestamp|date:"g:iA" }}</small>
+                <div>
+                    Read by:
+                    {% for user in message.read_by.all %}
+                        {{ user.username }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </div>
             </div>
         {% endfor %}
     </div>
@@ -55,6 +61,7 @@
                 <strong>${data.sender}</strong>
                 <p>${data.message}</p>
                 <small>${data.timestamp}</small>
+                <div>Read by: ${data.read_by.map(id => id).join(', ')}</div>
             `;
             messagesDiv.appendChild(newMessage);
         };

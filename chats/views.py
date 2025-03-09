@@ -143,6 +143,11 @@ def chat_detail(request, chat_room_id):
     if request.user not in chat_room.participants.all():
         return HttpResponseForbidden("You are not a participant in this chat room.")
     chat_messages = chat_room.messages.order_by('timestamp')
+    
+    for message in chat_messages:
+        if message.sender != request.user:
+            message.read_by.add(request.user)
+            
     form = MessageForm()
     context = {
         'chat_room': chat_room,
