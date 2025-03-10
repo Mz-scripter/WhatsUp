@@ -19,7 +19,7 @@
 
     {% load tz %}
     <div id="messages" class="messages">
-        {% for message in messages %}
+        {% for message in chat_messages %}
             <div class="message">
                 <strong>{{ message.get_sender_display }}</strong>
                 <p>{{ message.content }}</p>
