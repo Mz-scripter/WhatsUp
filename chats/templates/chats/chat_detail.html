@@ -49,6 +49,7 @@
 
     <script>
         const roomId = {{ chat_room.id }};
+        const currentUser = "{{ user.username|escapejs }}";
         const chatSocket = new WebSocket(
             'ws://' + window.location.host + '/ws/chat/' + roomId + '/'
         );
@@ -70,7 +71,7 @@
                 `;
             messagesDiv.appendChild(newMessage);
             typingIndicator.innerHTML = '';
-            } else if (data.type === 'typing_event') {
+            } else if (data.type === 'typing_event' && data.sender !== currentUser) {
                 if (data.is_typing) {
                     typingIndicator.innerHTML = `<p>${data.sender} is typing...</p>`;
                 } else {
