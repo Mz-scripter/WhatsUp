@@ -27,6 +27,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_id = self.scope['url_route']['kwargs']['room_id']
         self.room_group_name = f"chat_{self.room_id}"
+        self.user = self.scope['user']
+        
+        if not self.user.is_authenticated:
+            await self.close(code=4001)
+            return
         
         # Join room group
         await self.channel_layer.group_add(
@@ -44,41 +49,63 @@ class ChatConsumer(AsyncWebsocketConsumer):
     
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message_content = text_data_json['message']
-        sender_id = text_data_json['sender_id']
-        is_anonymous = text_data_json.get('is_anonymous', False)
+        event_type = text_data_json.get('type')
         
-        # Save message to database
-        sender = await get_user(sender_id)
-        chat_room = await get_chat_room(self.room_id)
-        msg = await create_message(
-            chat_room=chat_room,
-            sender=sender,
-            content=message_content,
-            is_anonymous=is_anonymous and chat_room.is_group_chat
-        )
-        timestamp_str = msg.timestamp.strftime("%I:%M%p")
-        formatted_time = timestamp_str.lstrip('0')
+        if not self.user.is_authenticated:
+            return
         
-        await database_sync_to_async(msg.read_by.add)(sender)
+        if event_type == 'chat_message':
+            message_content = text_data_json.get('message')
+            is_anonymous = text_data_json.get('is_anonymous', False)
+            
+            chat_room = await get_chat_room(self.room_id)
+            msg = await create_message(
+                chat_room=chat_room,
+                sender=self.user,
+                content=message_content,
+                is_anonymous=is_anonymous and chat_room.is_group_chat
+            )
+            await database_sync_to_async(msg.read_by.add)(self.user)
+            
+            timestamp_str = msg.timestamp.strftime("%I:%M%p")
+            formatted_time = timestamp_str.lstrip('0')
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': msg.content,
+                    'sender': msg.get_sender_display(),
+                    'timestamp': formatted_time,
+                    'read_by': [self.user.id]
+                }
+            )
         
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': msg.content,
-                'sender': msg.get_sender_display(),
-                'timestamp': formatted_time,
-                'read_by': [sender.id]
-            }
-        )
-    
+        elif event_type == 'typing':
+            is_typing = text_data_json.get('is_typing', False)
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'typing_event',
+                    'sender': self.user.username,
+                    'is_typing': is_typing
+                }
+            )
+
     async def chat_message(self, event):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
+            'type': 'chat_message',
             'message': event['message'],
             'sender': event['sender'],
             'timestamp': event['timestamp'],
             'read_by': event['read_by']
+        }))
+    
+    async def typing_event(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'typing_event',
+            'sender': event['sender'],
+            'is_typing': event['is_typing']
         }))
