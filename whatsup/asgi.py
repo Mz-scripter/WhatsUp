@@ -3,6 +3,7 @@ from django.core.asgi import get_asgi_application
 from dotenv import load_dotenv
 from pathlib import Path
 import django
+from channels.auth import AuthMiddlewareStack
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -15,9 +16,11 @@ def get_asgi_app():
     from chats import routing
     return ProtocolTypeRouter({
         "http": get_asgi_application(),
-        "websocket": URLRouter(
-            routing.websocket_urlpatterns
-        ),
+        "websocket": AuthMiddlewareStack(
+            URLRouter(
+                routing.websocket_urlpatterns
+            )
+        )
     })
     
 application = get_asgi_app()

@@ -34,6 +34,8 @@
         {% endfor %}
     </div>
 
+    <div id="typing-indicator"></div>
+
     <form id="message-form">
         {% csrf_token %}
         {{ form.content.label_tag }} {{ form.content }}
@@ -47,23 +49,34 @@
 
     <script>
         const roomId = {{ chat_room.id }};
-        const userId = {{ request.user.id }};
         const chatSocket = new WebSocket(
             'ws://' + window.location.host + '/ws/chat/' + roomId + '/'
         );
+        let typingTimeout;
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             const messagesDiv = document.getElementById('messages');
+            const typingIndicator = document.getElementById('typing-indicator');
+
+           if (data.type === 'chat_message') {
             const newMessage = document.createElement('div');
             newMessage.classList.add('message');
             newMessage.innerHTML = `
                 <strong>${data.sender}</strong>
                 <p>${data.message}</p>
                 <small>${data.timestamp}</small>
-                <div>Read by: ${data.read_by.map(id => id).join(', ')}</div>
-            `;
+                <div>Read by: ${data.read_by.join(', ')}</div>
+                `;
             messagesDiv.appendChild(newMessage);
+            typingIndicator.innerHTML = '';
+            } else if (data.type === 'typing_event') {
+                if (data.is_typing) {
+                    typingIndicator.innerHTML = `<p>${data.sender} is typing...</p>`;
+                } else {
+                    typingIndicator.innerHTML = '';
+                }
+            }
         };
 
         chatSocket.onerror = function(e) {
@@ -74,16 +87,35 @@
             console.error('WebSocket closed unexpectedly');
         };
 
+        const messageInput = document.querySelector('#id_content');
+        messageInput.addEventListener('input', function() {
+            clearTimeout(typingTimeout);
+            chatSocket.send(JSON.stringify({
+                'type': 'typing',
+                'is_typing': true
+            }));
+            typingTimeout = setTimeout(function() {
+                chatSocket.send(JSON.stringify({
+                    'type': 'typing',
+                    'is_typing': false
+                }));
+            }, 1000);
+        });
+
         document.getElementById('message-form').onsubmit = function(e) {
             e.preventDefault();
             const messageInput = document.querySelector('#id_content');
             const isAnonymous = document.querySelector('#id_is_anonymous')?.checked || false;
             chatSocket.send(JSON.stringify({
+                'type': 'chat_message',
                 'message': messageInput.value,
-                'sender_id': userId,
                 'is_anonymous': isAnonymous
             }));
             messageInput.value = '';
+            chatSocket.send(JSON.stringify({
+                'type': 'typing',
+                'is_typing': false
+            }));
         };
     </script>
 {% endblock %}
