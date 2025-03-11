@@ -135,6 +135,9 @@ def delete_chat_room(request, chat_room_id):
 @login_required
 def chat_list(request):
     chat_rooms = request.user.chat_rooms.all()
+    for chat_room in chat_rooms:
+        unread_count = chat_room.messages.exclude(read_by=request.user).count()
+        chat_room.unread_count = unread_count
     return render(request, 'chats/chat_list.html', {'chat_rooms': chat_rooms})
 
 @login_required
@@ -145,8 +148,7 @@ def chat_detail(request, chat_room_id):
     chat_messages = chat_room.messages.order_by('timestamp')
     
     for message in chat_messages:
-        if message.sender != request.user:
-            message.read_by.add(request.user)
+        message.read_by.add(request.user)
             
     form = MessageForm()
     context = {
