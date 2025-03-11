@@ -49,8 +49,9 @@
 
     <script>
         const roomId = {{ chat_room.id }};
-        const currentUser = "{{ user.username|escapejs }}"
+        const currentUser = "{{ user.username|escapejs }}";
         const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+
         const chatSocket = new WebSocket(
             protocol + window.location.host + '/ws/chat/' + roomId + '/'
         );
