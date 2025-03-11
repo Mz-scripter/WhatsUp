@@ -80,6 +80,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'read_by': [self.user.id]
                 }
             )
+            
+            participants = await database_sync_to_async(list)(chat_room.participants.exclude(id=self.user.id))
+            for participant in participants:
+                unread_count = await database_sync_to_async(chat_room.messages.exclude(read_by=participant).count)()
+                await self.channel_layer.group_send(
+                    f"user_{participant.id}_notifications",
+                    {
+                        'type': 'notification_event',
+                        'chat_room_id': chat_room.id,
+                        'unread_count': unread_count,
+                        'message': f"New message in {chat_room.name}",
+                    }
+                )
         
         elif event_type == 'typing':
             is_typing = text_data_json.get('is_typing', False)
@@ -108,4 +121,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'type': 'typing_event',
             'sender': event['sender'],
             'is_typing': event['is_typing']
+        }))
+
+
+class NotificationConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['user']
+        if not self.user.is_authenticated:
+            await self.close(code=4001)
+            return
+        self.group_name = f"user_{self.user.id}_notifications"
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+    
+    async def disconnect(self,close_code):
+        if hasattr(self, 'group_name'):
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+    
+    async def notification_event(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'notification',
+            'chat_room_id': event['chat_room_id'],
+            'unread_count': event['unread_count'],
+            'message': event['message'],
         }))

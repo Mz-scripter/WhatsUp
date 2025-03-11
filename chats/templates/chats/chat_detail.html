@@ -49,8 +49,10 @@
 
     <script>
         const roomId = {{ chat_room.id }};
+        const currentUser = "{{ user.username|escapejs }}"
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
         const chatSocket = new WebSocket(
-            'ws://' + window.location.host + '/ws/chat/' + roomId + '/'
+            protocol + window.location.host + '/ws/chat/' + roomId + '/'
         );
         let typingTimeout;
 
@@ -69,8 +71,9 @@
                 <div>Read by: ${data.read_by.join(', ')}</div>
                 `;
             messagesDiv.appendChild(newMessage);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
             typingIndicator.innerHTML = '';
-            } else if (data.type === 'typing_event') {
+            } else if (data.type === 'typing_event' && data.sender !== currentUser) {
                 if (data.is_typing) {
                     typingIndicator.innerHTML = `<p>${data.sender} is typing...</p>`;
                 } else {
@@ -106,16 +109,20 @@
             e.preventDefault();
             const messageInput = document.querySelector('#id_content');
             const isAnonymous = document.querySelector('#id_is_anonymous')?.checked || false;
-            chatSocket.send(JSON.stringify({
-                'type': 'chat_message',
-                'message': messageInput.value,
-                'is_anonymous': isAnonymous
-            }));
-            messageInput.value = '';
-            chatSocket.send(JSON.stringify({
-                'type': 'typing',
-                'is_typing': false
-            }));
+            if (chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({
+                    'type': 'chat_message',
+                    'message': messageInput.value,
+                    'is_anonymous': isAnonymous
+                }));
+                messageInput.value = '';
+                chatSocket.send(JSON.stringify({
+                    'type': 'typing',
+                    'is_typing': false
+                }));
+            } else {
+                console.error('WebSocket is not open. Cannot send message.')
+            }
         };
     </script>
 {% endblock %}

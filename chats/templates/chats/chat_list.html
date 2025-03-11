@@ -6,9 +6,9 @@
     <h1>Your Chats</h1>
     <ul>
         {% for chat_room in chat_rooms %}
-            <li>
+            <li id="chat-room-{{ chat_room.id }}">
                 {% if chat_room.is_group_chat %}
-                    <a href="{% url 'chat_detail' chat_room.id %}">{{ chat_room.name }}</a>
+                    <a href="{% url 'chat_detail' chat_room.id %}">{{ chat_room.name|default:"Unnamed Group Chat" }}</a>
                 {% else %}
                     {% for participant in chat_room.participants.all %}
                         {% if participant != user %}
@@ -16,8 +16,48 @@
                         {% endif %}
                     {% endfor %}
                 {% endif %}
+                {% if chat_room.unread_count > 0 %}
+                    <span class="unread-count">({{ chat_room.unread_count }})</span>
+                {% endif %}
             </li>
         {% endfor %}
     </ul>
     <a href="{% url 'create_group' %}">Create Group Chat</a>
+
+    <script>
+        const notificationSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/notifications/'
+        );
+
+        notificationSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'notification') {
+                const chatRoomId = data.chat_room_id;
+                const unreadCount = data.unread_count;
+                const chatRoomELement = document.getElementById(`chat-room-${chatRoomId}`);
+                let unreadSpan = chatRoomELement.querySelector('.unread-count');
+
+                if (unreadCount > 0) {
+                    if (unreadSpan) {
+                        unreadSpan.textContent = `(${unreadCount})`;
+                    } else {
+                        unreadSpan = document.createElement('span');
+                        unreadSpan.className = 'unread-count';
+                        unreadSpan.textContent = `(${unreadCount})`;
+                        chatRoomELement.appendChild(unreadSpan);
+                    }
+                } else if (unreadSpan) {
+                    unreadSpan.remove();
+                }
+            }
+        };
+
+        notificationSocket.onerror = function(e) {
+            console.error('Notification WebSocket error:', e);
+        };
+
+        notificationSocket.onclose = function(e) {
+            console.error('Notification WebSocket closed unexpectedly');
+        };
+    </script>
 {% endblock %}
