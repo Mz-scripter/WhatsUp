@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 class ChatRoom(models.Model):
@@ -24,6 +25,11 @@ class ChatRoom(models.Model):
                 return f"Chat Between {users[0].username} and {users[1].username}"
 
 
+class MessageQuerySet(models.QuerySet):
+    def visible_to(self, user):
+        return self.exclude(is_deleted=True).exclude(deleted_for=user)
+
+
 class Message(models.Model):
     chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -31,6 +37,12 @@ class Message(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     is_anonymous = models.BooleanField(default=False)
     read_by = models.ManyToManyField(User, related_name='read_messages', blank=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_for = models.ManyToManyField(User, related_name='deleted_messages', blank=True)
+    edited_at = models.DateTimeField(null=True, blank=True)
+    reply_to = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
+    
+    objects = MessageQuerySet.as_manager()
     
     def __str__(self):
         sender_display = "Anonymous" if self.is_anonymous else self.sender.username
@@ -47,4 +59,3 @@ class Message(models.Model):
         
     def get_sender_display(self):
         return "Anonymous" if self.is_anonymous else self.sender.username
-        
