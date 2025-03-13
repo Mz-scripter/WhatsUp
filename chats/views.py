@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import ChatRoom
+from .models import ChatRoom, Message
 from django.contrib.auth.models import User
 from .forms import MessageForm
 from django.http import HttpResponseForbidden
@@ -145,7 +145,7 @@ def chat_detail(request, chat_room_id):
     chat_room = ChatRoom.objects.get(id=chat_room_id)
     if request.user not in chat_room.participants.all():
         return HttpResponseForbidden("You are not a participant in this chat room.")
-    chat_messages = chat_room.messages.order_by('timestamp')
+    chat_messages = Message.objects.filter(chat_room=chat_room).visible_to(request.user).order_by('timestamp')
     
     for message in chat_messages:
         message.read_by.add(request.user)

@@ -1,129 +1,167 @@
-{% extends 'base.html' %}
-
-{% block title %}Chat Room{% endblock %}
-
-{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room: {{ chat_room }}</title>
+    <style>
+        .messages { max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+        .message { margin-bottom: 10px; padding: 5px; border-bottom: 1px solid #eee; }
+        .reply-snippet { color: #555; font-size: 0.9em; cursor: pointer; background: #f0f0f0; padding: 2px 5px; }
+        .edited { margin-left: 5px; color: #888; }
+    </style>
+</head>
+<body>
     <h1>Chat Room: {{ chat_room }}</h1>
-
-    {% if chat_room.is_group_chat and user in chat_room.admins.all %}
-        <div>
-            <h2>Management
-                <a href="{% url 'add_participants' chat_room.id %}">Add Participants</a>
-                <a href="{% url 'remove_participants' chat_room.id %}">Remove Participants</a>
-                <a href="{% url 'designate_admin' chat_room.id %}">Designate Admin</a>
-                <a href="{% url 'rename_chat_room' chat_room.id %}">Rename Chat</a>
-                <a href="{% url 'delete_chat_room' chat_room.id %}">Delete Chat</a>
-            </h2>
-        </div>
-    {% endif %}
-
-    {% load tz %}
     <div id="messages" class="messages">
         {% for message in chat_messages %}
-            <div class="message">
-                <strong>{{ message.get_sender_display }}</strong>
+            <div id="message-{{ message.id }}" class="message">
+                {% if message.reply_to %}
+                    <div class="reply-snippet" onclick="scrollToMessage({{ message.reply_to.id }})">
+                        Replying to {{ message.reply_to.sender.username }}: {{ message.reply_to.content|truncatechars:50 }}
+                    </div>
+                {% endif %}
+                <strong>{{ message.sender.username }}</strong>
                 <p>{{ message.content }}</p>
                 <small>{{ message.timestamp|date:"g:iA" }}</small>
+                {% if message.edited_at %}
+                    <small class="edited">Edited</small>
+                {% endif %}
                 <div>
-                    Read by:
-                    {% for user in message.read_by.all %}
-                        {{ user.username }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
+                    <button onclick="showDeleteOptions({{ message.id }})">Delete</button>
+                    {% if message.sender == user %}
+                        <button onclick="editMessage({{ message.id }})">Edit</button>
+                    {% endif %}
+                    <button onclick="replyToMessage({{ message.id }})">Reply</button>
                 </div>
             </div>
         {% endfor %}
+        <div id="typing-indicator"></div>
     </div>
-
-    <div id="typing-indicator"></div>
-
     <form id="message-form">
-        {% csrf_token %}
-        {{ form.content.label_tag }} {{ form.content }}
-        {% if chat_room.is_group_chat %}
-            <div>
-                {{ form.is_anonymous }} {{ form.anonymous.label_tag }}
-            </div>
-        {% endif %}
+        <input type="text" id="message-input" placeholder="Type a message">
         <button type="submit">Send</button>
     </form>
 
     <script>
         const roomId = {{ chat_room.id }};
+        const currentUserId = {{ user.id }};
+        const typingIndicator = document.getElementById('typing-indicator');
         const currentUser = "{{ user.username|escapejs }}";
-        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-
-        const chatSocket = new WebSocket(
-            protocol + window.location.host + '/ws/chat/' + roomId + '/'
-        );
-        let typingTimeout;
+        const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + roomId + '/');
+        let replyToId = null;
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             const messagesDiv = document.getElementById('messages');
-            const typingIndicator = document.getElementById('typing-indicator');
 
-           if (data.type === 'chat_message') {
-            const newMessage = document.createElement('div');
-            newMessage.classList.add('message');
-            newMessage.innerHTML = `
-                <strong>${data.sender}</strong>
-                <p>${data.message}</p>
-                <small>${data.timestamp}</small>
-                <div>Read by: ${data.read_by.join(', ')}</div>
-                `;
-            messagesDiv.appendChild(newMessage);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            typingIndicator.innerHTML = '';
+            if (data.type === 'chat_message') {
+                const newMessage = document.createElement('div');
+                newMessage.id = 'message-' + data.message_id;
+                newMessage.className = 'message';
+                let html = `<strong>${data.sender}</strong><p>${data.message}</p><small>${data.timestamp}</small>`;
+                if (data.reply_to_id) {
+                    html = `<div class="reply-snippet" onclick="scrollToMessage(${data.reply_to_id})">Replying to ${data.reply_to_sender}: ${data.reply_to_content}</div>` + html;
+                }
+                html += `<div><button onclick="showDeleteOptions(${data.message_id})">Delete</button>`;
+                if (data.sender === '{{ user.username }}') {
+                    html += `<button onclick="editMessage(${data.message_id})">Edit</button>`;
+                }
+                html += `<button onclick="replyToMessage(${data.message_id})">Reply</button></div>`;
+                newMessage.innerHTML = html;
+                messagesDiv.appendChild(newMessage);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                typingIndicator.innerHTML = '';
+            } else if (data.type === 'message_deleted') {
+                const messageElement = document.getElementById('message-' + data.message_id);
+                if (data.scope === 'everyone') {
+                    if (messageElement) {
+                        messageElement.innerHTML = '<p>This message was deleted</p>';
+                    }
+                } else if (data.scope === 'me' && data.user_id === currentUserId) {
+                    if (messageElement) {
+                        messageElement.style.display = 'none';
+                    }
+                }
+            } else if (data.type === 'message_edited') {
+                const messageElement = document.getElementById('message-' + data.message_id);
+                if (messageElement) {
+                    messageElement.querySelector('p').textContent = data.new_content;
+                    let editedLabel = messageElement.querySelector('.edited');
+                    if (!editedLabel) {
+                        editedLabel = document.createElement('small');
+                        editedLabel.className = 'edited';
+                        editedLabel.textContent = 'Edited';
+                        messageElement.querySelector('small').after(editedLabel);
+                    }
+                }
             } else if (data.type === 'typing_event' && data.sender !== currentUser) {
                 if (data.is_typing) {
-                    typingIndicator.innerHTML = `<p>${data.sender} is typing...</p>`;
+                    typingIndicator.innerHTML = `<small>${data.sender} is typing...</small>`
                 } else {
                     typingIndicator.innerHTML = '';
                 }
             }
         };
-
-        chatSocket.onerror = function(e) {
-            console.error('WebSocket error:', e);
-        };
-
-        chatSocket.onclose = function(e) {
-            console.error('WebSocket closed unexpectedly');
-        };
-
-        const messageInput = document.querySelector('#id_content');
-        messageInput.addEventListener('input', function() {
-            clearTimeout(typingTimeout);
-            chatSocket.send(JSON.stringify({
-                'type': 'typing',
-                'is_typing': true
-            }));
-            typingTimeout = setTimeout(function() {
-                chatSocket.send(JSON.stringify({
-                    'type': 'typing',
-                    'is_typing': false
-                }));
-            }, 1000);
-        });
+        
 
         document.getElementById('message-form').onsubmit = function(e) {
             e.preventDefault();
-            const messageInput = document.querySelector('#id_content');
-            const isAnonymous = document.querySelector('#id_is_anonymous')?.checked || false;
-            if (chatSocket.readyState === WebSocket.OPEN) {
-                chatSocket.send(JSON.stringify({
-                    'type': 'chat_message',
-                    'message': messageInput.value,
-                    'is_anonymous': isAnonymous
-                }));
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+            if (message) {
+                const data = {
+                    'type': replyToId ? 'reply_message' : 'chat_message',
+                    'message': message,
+                    'is_anonymous': false
+                };
+                if (replyToId) {
+                    data.reply_to_id = replyToId;
+                }
+                chatSocket.send(JSON.stringify(data));
                 messageInput.value = '';
-                chatSocket.send(JSON.stringify({
-                    'type': 'typing',
-                    'is_typing': false
-                }));
-            } else {
-                console.error('WebSocket is not open. Cannot send message.')
+                replyToId = null;
             }
         };
+
+        function scrollToMessage(messageId) {
+            const element = document.getElementById('message-' + messageId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function showDeleteOptions(messageId) {
+            const choice = confirm('Delete for everyone? (Cancel for "Delete for Me")');
+            deleteMessage(messageId, choice ? 'everyone' : 'me');
+        }
+
+        function deleteMessage(messageId, scope) {
+            chatSocket.send(JSON.stringify({
+                'type': 'delete_message',
+                'message_id': messageId,
+                'scope': scope
+            }));
+        }
+
+        function editMessage(messageId) {
+            console.log("Editing message ID:", messageId);
+            const messageElement = document.getElementById('message-' + messageId);
+            const currentContent = messageElement.querySelector('p').textContent;
+            const newContent = prompt('Edit message:', currentContent);
+            if (newContent && newContent !== currentContent) {
+                chatSocket.send(JSON.stringify({
+                    'type': 'edit_message',
+                    'message_id': messageId,
+                    'new_content': newContent
+                }));
+            }
+        }
+
+        function replyToMessage(messageId) {
+            replyToId = messageId;
+            document.getElementById('message-input').focus();
+            alert('Type your reply and press Send.');
+        }
     </script>
-{% endblock %}
+</body>
+</html>
