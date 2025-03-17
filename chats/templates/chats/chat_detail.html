@@ -35,8 +35,8 @@
                 </div>
             </div>
         {% endfor %}
-        <div id="typing-indicator"></div>
     </div>
+    <div id="typing-indicator"></div>
     <form id="message-form">
         <input type="text" id="message-input" placeholder="Type a message">
         <button type="submit">Send</button>
@@ -46,6 +46,9 @@
         const roomId = {{ chat_room.id }};
         const currentUserId = {{ user.id }};
         const typingIndicator = document.getElementById('typing-indicator');
+        const messageInput = document.getElementById('message-input');
+        let typingTimer;
+        let isTyping = false;
         const currentUser = "{{ user.username|escapejs }}";
         const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + roomId + '/');
         let replyToId = null;
@@ -103,6 +106,34 @@
             }
         };
         
+        messageInput.addEventListener('input', function() {
+            if (messageInput.value.trim() === '') {
+                if (isTyping) {
+                    chatSocket.send(JSON.stringify({
+                        'type': 'typing',
+                        'is_typing': false
+                    }));
+                    isTyping = false;
+                    clearTimeout(typingTimer);
+                }
+            } else {
+                if (!isTyping) {
+                    chatSocket.send(JSON.stringify({
+                        'type': 'typing',
+                        'is_typing': true
+                    }));
+                    isTyping = true;
+                }
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(function() {
+                    chatSocket.send(JSON.stringify({
+                        'type': 'typing',
+                        'is_typing': false
+                    }));
+                    isTyping = false;
+                }, 2000)
+            }
+        });
 
         document.getElementById('message-form').onsubmit = function(e) {
             e.preventDefault();
@@ -120,6 +151,13 @@
                 chatSocket.send(JSON.stringify(data));
                 messageInput.value = '';
                 replyToId = null;
+
+                chatSocket.send(JSON.stringify({
+                    'type': 'typing',
+                    'is_typing': false
+                }));
+                isTyping = false;
+                clearTimeout(typingTimer);
             }
         };
 
