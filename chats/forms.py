@@ -8,4 +8,7 @@ class MessageForm(forms.ModelForm):
         fields = ['content', 'is_anonymous']
         widgets = {
             'content': forms.Textarea(attrs={'rows': 2}),
+            'is_anonymous': forms.CheckboxInput(),
         }
+    
+    is_anonymous = forms.BooleanField(label="Send anonymously", required=False)

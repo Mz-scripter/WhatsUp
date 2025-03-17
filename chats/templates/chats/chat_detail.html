@@ -12,15 +12,27 @@
 </head>
 <body>
     <h1>Chat Room: {{ chat_room }}</h1>
+
+    {% if chat_room.is_group_chat and user in chat_room.admins.all %}
+        <div>
+            <h2>Management</h2>
+            <a href="{% url 'add_participants' chat_room.id %}">Add Participants</a>
+            <a href="{% url 'remove_participants' chat_room.id %}">Remove Participants</a>
+            <a href="{% url 'designate_admin' chat_room.id %}">Designate Admin</a>
+            <a href="{% url 'rename_chat_room' chat_room.id %}">Rename Chat</a>
+            <a href="{% url 'delete_chat_room' chat_room.id %}">Delete Chat</a>
+        </div>
+    {% endif %}
+
     <div id="messages" class="messages">
         {% for message in chat_messages %}
             <div id="message-{{ message.id }}" class="message">
                 {% if message.reply_to %}
                     <div class="reply-snippet" onclick="scrollToMessage({{ message.reply_to.id }})">
-                        Replying to {{ message.reply_to.sender.username }}: {{ message.reply_to.content|truncatechars:50 }}
+                        Replying to {{ message.reply_to.get_sender_display }}: {{ message.reply_to.content|truncatechars:50 }}
                     </div>
                 {% endif %}
-                <strong>{{ message.sender.username }}</strong>
+                <strong>{{ message.get_sender_display }}</strong>
                 <p>{{ message.content }}</p>
                 <small>{{ message.timestamp|date:"g:iA" }}</small>
                 {% if message.edited_at %}
@@ -39,6 +51,12 @@
     <div id="typing-indicator"></div>
     <form id="message-form">
         <input type="text" id="message-input" placeholder="Type a message">
+
+        {% if chat_room.is_group_chat %}
+            <div>
+                {{ form.is_anonymous.label_tag }} {{ form.is_anonymous }}
+            </div>
+        {% endif %}
         <button type="submit">Send</button>
     </form>
 
@@ -140,10 +158,14 @@
             const messageInput = document.getElementById('message-input');
             const message = messageInput.value.trim();
             if (message) {
+                const isAnonymousCheckbox = document.getElementById('id_is_anonymous');
+                const isAnonymous = isAnonymousCheckbox ? isAnonymousCheckbox.checked : false;
+                console.log(isAnonymous)
+
                 const data = {
                     'type': replyToId ? 'reply_message' : 'chat_message',
                     'message': message,
-                    'is_anonymous': false
+                    'is_anonymous': isAnonymous
                 };
                 if (replyToId) {
                     data.reply_to_id = replyToId;

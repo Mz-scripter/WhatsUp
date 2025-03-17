@@ -220,7 +220,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'chat_message',
                 'message_id': msg.id,
                 'message': msg.content,
-                'sender': msg.sender.username,
+                'sender': msg.get_sender_display(),
                 'timestamp': formatted_time,
                 'reply_to_id': reply_to_msg.id,
                 'reply_to_sender': reply_to_msg.sender.username,
