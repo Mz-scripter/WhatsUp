@@ -17,13 +17,15 @@ def get_user(user_id):
 
 @database_sync_to_async
 def create_message(chat_room, sender, content, is_anonymous, reply_to=None):
-    return Message.objects.create(
+    msg =  Message.objects.create(
         chat_room=chat_room,
         sender=sender,
-        content=content,
         is_anonymous=is_anonymous,
         reply_to=reply_to
     )
+    msg.content = content
+    msg.save()
+    return msg
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
