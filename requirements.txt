@@ -19,6 +19,7 @@ pyasn1_modules==0.4.1
 pycparser==2.22
 pyOpenSSL==25.0.0
 python-dotenv==1.0.1
+pytz==2025.1
 redis==5.2.1
 service-identity==24.2.0
 setuptools==75.8.2

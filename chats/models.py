@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from encryption import fernet
 
 
 class ChatRoom(models.Model):
@@ -33,7 +34,7 @@ class MessageQuerySet(models.QuerySet):
 class Message(models.Model):
     chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
+    encrypted_content = models.BinaryField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_anonymous = models.BooleanField(default=False)
     read_by = models.ManyToManyField(User, related_name='read_messages', blank=True)
@@ -46,15 +47,26 @@ class Message(models.Model):
     
     def __str__(self):
         sender_display = "Anonymous" if self.is_anonymous else self.sender.username
-        return f"Message from {sender_display} in {self.chat_room}"
+        return f"{self.encrypted_content}"
     
     def clean(self):
         super().clean()
         if not self.content or not self.content.strip():
             raise ValidationError("Message content cannot be empty.")
         
+    @property
+    def content(self):
+        """Decrypt and return the content as a string."""
+        return fernet.decrypt(self.encrypted_content).decode()
+    
+    @content.setter
+    def content(self, value):
+        """Encrypt the content and store it as bytes"""
+        self.encrypted_content = fernet.encrypt(value.encode())
+    
     def save(self, *args, **kwargs):
-        self.full_clean()
+        if isinstance(self.encrypted_content, str):
+            self.encrypted_content = self.encrypted_content.encode()
         super().save(*args, **kwargs)
         
     def get_sender_display(self):
