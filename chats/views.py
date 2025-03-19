@@ -138,6 +138,9 @@ def chat_list(request):
     for chat_room in chat_rooms:
         unread_count = chat_room.messages.exclude(read_by=request.user).count()
         chat_room.unread_count = unread_count
+        last_message = Message.objects.filter(chat_room=chat_room).order_by('-timestamp').first()
+        chat_room.last_message = last_message.content if last_message else "No messages yet"
+        chat_room.last_message_time = last_message.timestamp if last_message else None
     return render(request, 'chats/chat_list.html', {'chat_rooms': chat_rooms})
 
 @login_required
