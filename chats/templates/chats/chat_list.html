@@ -3,51 +3,67 @@
 {% block title %}Your Chats{% endblock %}
 
 {% block content %}
-    <h1>Your Chats</h1>
-    <ul>
-        {% for chat_room in chat_rooms %}
-            <li id="chat-room-{{ chat_room.id }}">
-                {% if chat_room.is_group_chat %}
-                    <a href="{% url 'chat_detail' chat_room.id %}">{{ chat_room.name|default:"Unnamed Group Chat" }}</a>
-                {% else %}
-                    {% for participant in chat_room.participants.all %}
-                        {% if participant != user %}
-                            <a href="{% url 'chat_detail' chat_room.id %}">Chat with {{ participant.username }}</a>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-                {% if chat_room.unread_count > 0 %}
-                    <span class="unread-count">({{ chat_room.unread_count }})</span>
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
-    <a href="{% url 'create_group' %}">Create Group Chat</a>
+    <div class="chat-list-page">
+        <h1>Your Chats</h1>
+        <ul>
+            {% for chat_room in chat_rooms %}
+                <li id="chat-room-{{ chat_room.id }}" class="chat-item {% if chat_room.unread_count > 0 %}unread{% endif %}">
+                    <a href="{% url 'chat_detail' chat_room.id %}" class="chat-link">
+                        <div class="chat-info">
+                            <span class="chat-name">
+                                {% if chat_room.is_group_chat %}
+                                    {{ chat_room.name|default:"Unnamed Group Chat" }}
+                                {% else %}
+                                    {% for participant in chat_room.participants.all %}
+                                        {% if participant != user %}
+                                            {{ participant.username }}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </span>
+                            <span class="last-message">{{ chat_room.last_message|truncatechars:30 }}</span>
+                        </div>
+                        <div class="chat-meta">
+                            <span class="timestamp">
+                                {% if chat_room.last_message_time %}
+                                    {{ chat_room.last_message_time|date:"g:iA" }}
+                                {% endif %}
+                            </span>
+                            {% if chat_room.unread_count > 0 %}
+                                <span class="unread-dot"></span>
+                            {% endif %}
+                        </div>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+        <a href="{% url 'create_group' %}" class="create-group">Create Group Chat</a>
+    </div>
 
     <script>
-        const notificationSocket = new WebSocket(
-            'ws://' + window.location.host + '/ws/notifications/'
-        );
+        const notificationSocket = new WebSocket('ws://' + window.location.host + '/ws/notifications/');
 
         notificationSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             if (data.type === 'notification') {
                 const chatRoomId = data.chat_room_id;
                 const unreadCount = data.unread_count;
-                const chatRoomELement = document.getElementById(`chat-room-${chatRoomId}`);
-                let unreadSpan = chatRoomELement.querySelector('.unread-count');
+                const chatRoomElement = document.getElementById(`chat-room-${chatRoomId}`);
+                const unreadDot = chatRoomElement.querySelector('.unread-dot');
+                const chatMeta = chatRoomElement.querySelector('.chat-meta');
 
                 if (unreadCount > 0) {
-                    if (unreadSpan) {
-                        unreadSpan.textContent = `(${unreadCount})`;
-                    } else {
-                        unreadSpan = document.createElement('span');
-                        unreadSpan.className = 'unread-count';
-                        unreadSpan.textContent = `(${unreadCount})`;
-                        chatRoomELement.appendChild(unreadSpan);
+                    chatRoomElement.classList.add('unread');
+                    if (!unreadDot) {
+                        const dot = document.createElement('span');
+                        dot.className = 'unread-dot';
+                        chatMeta.appendChild(dot);
                     }
-                } else if (unreadSpan) {
-                    unreadSpan.remove();
+                } else {
+                    chatRoomElement.classList.remove('unread');
+                    if (unreadDot) {
+                        unreadDot.remove();
+                    }
                 }
             }
         };

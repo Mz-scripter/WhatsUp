@@ -1,73 +1,71 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chat Room: {{ chat_room }}</title>
-    <style>
-        .messages { max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
-        .message { margin-bottom: 10px; padding: 5px; border-bottom: 1px solid #eee; }
-        .reply-snippet { color: #555; font-size: 0.9em; cursor: pointer; background: #f0f0f0; padding: 2px 5px; }
-        .edited { margin-left: 5px; color: #888; }
-    </style>
-</head>
-<body>
-    <h1>Chat Room: {{ chat_room }}</h1>
 
-    {% if chat_room.is_group_chat and user in chat_room.admins.all %}
-        <div>
-            <h2>Management</h2>
-            <a href="{% url 'add_participants' chat_room.id %}">Add Participants</a>
-            <a href="{% url 'remove_participants' chat_room.id %}">Remove Participants</a>
-            <a href="{% url 'designate_admin' chat_room.id %}">Designate Admin</a>
-            <a href="{% url 'rename_chat_room' chat_room.id %}">Rename Chat</a>
-            <a href="{% url 'delete_chat_room' chat_room.id %}">Delete Chat</a>
-        </div>
-    {% endif %}
+{% block title %}Chat Room: {{ chat_room }}{% endblock %}
 
-    <div id="messages" class="messages">
-        {% for message in chat_messages %}
-            <div id="message-{{ message.id }}" class="message">
-                {% if message.reply_to %}
-                    <div class="reply-snippet" onclick="scrollToMessage({{ message.reply_to.id }})">
-                        Replying to {{ message.reply_to.get_sender_display }}: {{ message.reply_to.content|truncatechars:50 }}
-                    </div>
-                {% endif %}
-                <strong>{{ message.get_sender_display }}</strong>
-                <p>{{ message.content }}</p>
-                <small>{{ message.timestamp|date:"g:iA" }}</small>
-                {% if message.edited_at %}
-                    <small class="edited">Edited</small>
-                {% endif %}
-                <div>
-                    <button onclick="showDeleteOptions({{ message.id }})">Delete</button>
-                    {% if message.sender == user %}
-                        <button onclick="editMessage({{ message.id }})">Edit</button>
-                    {% endif %}
-                    <button onclick="replyToMessage({{ message.id }})">Reply</button>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-    <div id="typing-indicator"></div>
-    <form id="message-form">
-        <input type="text" id="message-input" placeholder="Type a message">
-
-        {% if chat_room.is_group_chat %}
-            <div>
-                {{ form.is_anonymous.label_tag }} {{ form.is_anonymous }}
+{% block content %}
+    <div class="chat-container">
+        {% if chat_room.is_group_chat and user in chat_room.admins.all %}
+            <div class="management">
+                <h2>Management</h2>
+                <a href="{% url 'add_participants' chat_room.id %}">Add Participants</a>
+                <a href="{% url 'remove_participants' chat_room.id %}">Remove Participants</a>
+                <a href="{% url 'designate_admin' chat_room.id %}">Designate Admin</a>
+                <a href="{% url 'rename_chat_room' chat_room.id %}">Rename Chat</a>
+                <a href="{% url 'delete_chat_room' chat_room.id %}">Delete Chat</a>
             </div>
         {% endif %}
-        <button type="submit">Send</button>
-    </form>
+
+        <div id="messages" class="messages">
+            {% for message in chat_messages %}
+                <div id="message-{{ message.id }}" class="message {% if message.sender == user %}sent{% else %}received{% endif %} {% if message.is_anonymous %}anonymous{% endif %}">
+                    {% if message.reply_to %}
+                        <div class="reply-snippet" onclick="scrollToMessage({{ message.reply_to.id }})">
+                            Replying to {{ message.reply_to.get_sender_display }}: {{ message.reply_to.content|truncatechars:50 }}
+                        </div>
+                    {% endif %}
+                    <div class="bubble">
+                        <strong>{{ message.get_sender_display }}</strong>
+                        <p>{{ message.content }}</p>
+                        <div class="timestamp">{{ message.timestamp|date:"g:iA" }}</div>
+                        {% if message.edited_at %}
+                            <span class="edited">Edited</span>
+                        {% endif %}
+                        <div>
+                            <button onclick="showDeleteOptions({{ message.id }})">Delete</button>
+                            {% if message.sender == user %}
+                                <button onclick="editMessage({{ message.id }})">Edit</button>
+                            {% endif %}
+                            <button onclick="replyToMessage({{ message.id }})">Reply</button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <div id="typing-indicator" class="typing-indicator"></div>
+        </div>
+
+        <div class="footer">
+            <form id="message-form">
+                <input type="text" id="message-input" placeholder="Type a message">
+                {% if chat_room.is_group_chat %}
+                    <div>
+                        {{ form.is_anonymous.label_tag }} {{ form.is_anonymous }}
+                    </div>
+                {% endif %}
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </div>
 
     <script>
+        // Existing JavaScript remains largely the same, with updates for typing indicator
         const roomId = {{ chat_room.id }};
         const currentUserId = {{ user.id }};
+        const currentUser = "{{ user.username|escapejs }}";
         const typingIndicator = document.getElementById('typing-indicator');
         const messageInput = document.getElementById('message-input');
         let typingTimer;
         let isTyping = false;
-        const currentUser = "{{ user.username|escapejs }}";
         const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + roomId + '/');
         let replyToId = null;
 
@@ -78,25 +76,31 @@
             if (data.type === 'chat_message') {
                 const newMessage = document.createElement('div');
                 newMessage.id = 'message-' + data.message_id;
-                newMessage.className = 'message';
-                let html = `<strong>${data.sender}</strong><p>${data.message}</p><small>${data.timestamp}</small>`;
+                const alignment = data.sender === currentUser ? 'sent' : 'received';
+                const anonymousClass = data.is_anonymous ? 'anonymous' : '';
+                newMessage.className = `message ${alignment} ${anonymousClass}`;
+                let html = `
+                    <div class="bubble">
+                        <strong>${data.sender}</strong>
+                        <p>${data.message}</p>
+                        <div class="timestamp">${data.timestamp}</div>
+                        <div>
+                            <button onclick="showDeleteOptions(${data.message_id})">Delete</button>`;
+                if (data.sender === currentUser) {
+                    html += `<button onclick="editMessage(${data.message_id})">Edit</button>`;
+                }
+                html += `<button onclick="replyToMessage(${data.message_id})">Reply</button></div></div>`;
                 if (data.reply_to_id) {
                     html = `<div class="reply-snippet" onclick="scrollToMessage(${data.reply_to_id})">Replying to ${data.reply_to_sender}: ${data.reply_to_content}</div>` + html;
                 }
-                html += `<div><button onclick="showDeleteOptions(${data.message_id})">Delete</button>`;
-                if (data.sender === '{{ user.username }}') {
-                    html += `<button onclick="editMessage(${data.message_id})">Edit</button>`;
-                }
-                html += `<button onclick="replyToMessage(${data.message_id})">Reply</button></div>`;
                 newMessage.innerHTML = html;
                 messagesDiv.appendChild(newMessage);
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                typingIndicator.innerHTML = '';
             } else if (data.type === 'message_deleted') {
                 const messageElement = document.getElementById('message-' + data.message_id);
                 if (data.scope === 'everyone') {
                     if (messageElement) {
-                        messageElement.innerHTML = '<p>This message was deleted</p>';
+                        messageElement.querySelector('.bubble').innerHTML = '<p>This message was deleted</p>';
                     }
                 } else if (data.scope === 'me' && data.user_id === currentUserId) {
                     if (messageElement) {
@@ -109,21 +113,34 @@
                     messageElement.querySelector('p').textContent = data.new_content;
                     let editedLabel = messageElement.querySelector('.edited');
                     if (!editedLabel) {
-                        editedLabel = document.createElement('small');
+                        editedLabel = document.createElement('span');
                         editedLabel.className = 'edited';
                         editedLabel.textContent = 'Edited';
-                        messageElement.querySelector('small').after(editedLabel);
+                        messageElement.querySelector('.timestamp').after(editedLabel);
                     }
                 }
             } else if (data.type === 'typing_event' && data.sender !== currentUser) {
                 if (data.is_typing) {
-                    typingIndicator.innerHTML = `<small>${data.sender} is typing...</small>`
+                    typingIndicator.innerHTML = `
+                        <div class="typing-bubble">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>`;
+                    typingIndicator.classList.add('active');
+                    clearTimeout(typingTimer);
+                    typingTimer = setTimeout(() => {
+                        typingIndicator.classList.remove('active');
+                    }, 2000);
                 } else {
-                    typingIndicator.innerHTML = '';
+                    typingIndicator.classList.remove('active');
                 }
             }
         };
-        
+
+        // Rest of the JavaScript (input event listener, form submit, etc.) remains unchanged
         messageInput.addEventListener('input', function() {
             if (messageInput.value.trim() === '') {
                 if (isTyping) {
@@ -149,7 +166,7 @@
                         'is_typing': false
                     }));
                     isTyping = false;
-                }, 2000)
+                }, 2000);
             }
         });
 
@@ -160,8 +177,6 @@
             if (message) {
                 const isAnonymousCheckbox = document.getElementById('id_is_anonymous');
                 const isAnonymous = isAnonymousCheckbox ? isAnonymousCheckbox.checked : false;
-                console.log(isAnonymous)
-
                 const data = {
                     'type': replyToId ? 'reply_message' : 'chat_message',
                     'message': message,
@@ -173,7 +188,6 @@
                 chatSocket.send(JSON.stringify(data));
                 messageInput.value = '';
                 replyToId = null;
-
                 chatSocket.send(JSON.stringify({
                     'type': 'typing',
                     'is_typing': false
@@ -204,7 +218,6 @@
         }
 
         function editMessage(messageId) {
-            console.log("Editing message ID:", messageId);
             const messageElement = document.getElementById('message-' + messageId);
             const currentContent = messageElement.querySelector('p').textContent;
             const newContent = prompt('Edit message:', currentContent);
@@ -223,5 +236,4 @@
             alert('Type your reply and press Send.');
         }
     </script>
-</body>
-</html>
+{% endblock %}
