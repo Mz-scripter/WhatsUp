@@ -146,6 +146,7 @@ def chat_list(request):
 @login_required
 def chat_detail(request, chat_room_id):
     chat_room = ChatRoom.objects.get(id=chat_room_id)
+    chat_name = chat_room.get_chat_name(request.user)
     if request.user not in chat_room.participants.all():
         return HttpResponseForbidden("You are not a participant in this chat room.")
     chat_messages = Message.objects.filter(chat_room=chat_room).visible_to(request.user).order_by('timestamp')
@@ -158,5 +159,6 @@ def chat_detail(request, chat_room_id):
         'chat_room': chat_room,
         'chat_messages': chat_messages,
         'form': form,
+        'chat_name': chat_name,
     }
     return render(request, 'chats/chat_detail.html', context)
