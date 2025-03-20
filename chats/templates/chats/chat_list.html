@@ -3,42 +3,53 @@
 {% block title %}Your Chats{% endblock %}
 
 {% block content %}
-    <div class="chat-list-page">
-        <h1>Your Chats</h1>
-        <ul>
-            {% for chat_room in chat_rooms %}
-                <li id="chat-room-{{ chat_room.id }}" class="chat-item {% if chat_room.unread_count > 0 %}unread{% endif %}">
-                    <a href="{% url 'chat_detail' chat_room.id %}" class="chat-link">
-                        <div class="chat-info">
-                            <span class="chat-name">
-                                {% if chat_room.is_group_chat %}
-                                    {{ chat_room.name|default:"Unnamed Group Chat" }}
-                                {% else %}
-                                    {% for participant in chat_room.participants.all %}
-                                        {% if participant != user %}
-                                            {{ participant.username }}
-                                        {% endif %}
-                                    {% endfor %}
+        <header class="app-header">
+            <h2>WhatsUp</h2>
+            <div class="header-actions">
+                <a href="{% url 'create_group' %}">
+                    <button id="new-chat-btn">
+                        <i class="fas fa-plus"></i> New Group
+                    </button>
+                </a>
+            </div>
+        </header>
+        <div class="chat-list-page">
+            <ul>
+                {% for chat_room in chat_rooms %}
+                    <li id="chat-room-{{ chat_room.id }}" class="chat-item {% if chat_room.unread_count > 0 %}unread{% endif %}">
+                        <a href="{% url 'chat_detail' chat_room.id %}" class="chat-link">
+                            <div class="chat-info">
+                                <span class="chat-name">
+                                    {% if chat_room.is_group_chat %}
+                                        {{ chat_room.name|default:"Unnamed Group Chat" }}
+                                    {% else %}
+                                        {% for participant in chat_room.participants.all %}
+                                            {% if participant != user %}
+                                                {{ participant.username }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </span>
+                                <span class="last-message">{{ chat_room.last_message|truncatechars:30 }}</span>
+                            </div>
+                            <div class="chat-meta">
+                                <span class="timestamp">
+                                    {% if chat_room.last_message_time %}
+                                        {{ chat_room.last_message_time|date:"g:iA" }}
+                                    {% endif %}
+                                </span>
+                                {% if chat_room.unread_count > 0 %}
+                                    <span class="unread-dot"></span>
                                 {% endif %}
-                            </span>
-                            <span class="last-message">{{ chat_room.last_message|truncatechars:30 }}</span>
-                        </div>
-                        <div class="chat-meta">
-                            <span class="timestamp">
-                                {% if chat_room.last_message_time %}
-                                    {{ chat_room.last_message_time|date:"g:iA" }}
-                                {% endif %}
-                            </span>
-                            {% if chat_room.unread_count > 0 %}
-                                <span class="unread-dot"></span>
-                            {% endif %}
-                        </div>
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
-        <a href="{% url 'create_group' %}" class="create-group">Create Group Chat</a>
-    </div>
+                            </div>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        
+
 
     <script>
         const notificationSocket = new WebSocket('ws://' + window.location.host + '/ws/notifications/');

@@ -4,8 +4,24 @@
 {% block title %}Chat Room: {{ chat_room }}{% endblock %}
 
 {% block content %}
-    <div class="chat-container">
-        {% if chat_room.is_group_chat and user in chat_room.admins.all %}
+    <div id="chat-detail-page" class="page active">
+        <header class="chat-header">
+            <div class="chat-header-left">
+                <button id="back-to-list" class="back-button">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="chat-info">
+                    <h3 class="chat-title">{{ chat_name }}</h3>
+                    <span class="chat-participants">3 participants</span>
+                </div>
+            </div>
+            <div class="chat-header-right">
+                <button id="chat-settings" class="settings-button">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </header>
+        <!-- {% if chat_room.is_group_chat and user in chat_room.admins.all %}
             <div class="management">
                 <h2>Management</h2>
                 <a href="{% url 'add_participants' chat_room.id %}">Add Participants</a>
@@ -14,7 +30,7 @@
                 <a href="{% url 'rename_chat_room' chat_room.id %}">Rename Chat</a>
                 <a href="{% url 'delete_chat_room' chat_room.id %}">Delete Chat</a>
             </div>
-        {% endif %}
+        {% endif %} -->
 
         <div id="messages" class="messages">
             {% for message in chat_messages %}
@@ -44,7 +60,7 @@
             <div id="typing-indicator" class="typing-indicator"></div>
         </div>
 
-        <div class="footer">
+        <!-- <div class="footer">
             <form id="message-form">
                 <input type="text" id="message-input" placeholder="Type a message">
                 {% if chat_room.is_group_chat %}
@@ -53,6 +69,23 @@
                     </div>
                 {% endif %}
                 <button type="submit">Send</button>
+            </form>
+        </div> -->
+
+        <div class="message-input-container">
+            <!-- Anonymous toggle button -->
+            {% if chat_room.is_group_chat %}
+            <button id="anonymous-toggle" class="anonymous-button" title="Send anonymously">
+                <i class="fas fa-user-secret"></i>
+            </button>
+            <input type="hidden" id="is-anonymous" name="is_anonymous" value="false">
+            {% endif %}
+            <form class="message-input-wrapper" id="message-form">
+                <input type="text" id="message-input" placeholder="Type a message">
+                <!-- Send button with paper airplane icon -->
+                <button type="submit" id="send-message" class="send-button" title="Send message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </form>
         </div>
     </div>
@@ -64,6 +97,9 @@
         const currentUser = "{{ user.username|escapejs }}";
         const typingIndicator = document.getElementById('typing-indicator');
         const messageInput = document.getElementById('message-input');
+        const anonymousIcon = document.getElementById('anonymous-toggle');
+        const isAnonymousInput = document.getElementById('is-anonymous');
+
         let typingTimer;
         let isTyping = false;
         const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + roomId + '/');
@@ -170,13 +206,20 @@
             }
         });
 
+        if (anonymousIcon) {
+            anonymousIcon.addEventListener('click', function() {
+                const isActive = anonymousIcon.classList.toggle('active');
+                isAnonymousInput.value = isActive ? 'true' : 'false';
+            });
+        }          
+
+
         document.getElementById('message-form').onsubmit = function(e) {
             e.preventDefault();
             const messageInput = document.getElementById('message-input');
             const message = messageInput.value.trim();
             if (message) {
-                const isAnonymousCheckbox = document.getElementById('id_is_anonymous');
-                const isAnonymous = isAnonymousCheckbox ? isAnonymousCheckbox.checked : false;
+                const isAnonymous = isAnonymousInput ? isAnonymousInput.value === 'true' : false;
                 const data = {
                     'type': replyToId ? 'reply_message' : 'chat_message',
                     'message': message,

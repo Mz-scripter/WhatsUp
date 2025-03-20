@@ -15,15 +15,31 @@ class ChatRoom(models.Model):
     def __str__(self):
         if self.is_group_chat:
             return self.name or "Unnamed Group Chat"
+
+        users = self.participants.all()
+        participants_count = users.count()
+
+        if participants_count == 0:
+            return "Empty Chat"
+        elif participants_count == 1:
+            return f"Chat with {users[0].username}"
+        elif participants_count == 2:
+            return f"{users[0].username}, {users[1].username}"
         else:
-            users = self.participants.all()
-            participants_count = users.count()
-            if participants_count == 0:
-                return "Empty Chat"
-            elif participants_count == 1:
-                return f"Chat with {users[0].username}"
-            else:
-                return f"Chat Between {users[0].username} and {users[1].username}"
+            return f"Group Chat with {participants_count} members"
+
+    def get_chat_name(self, current_user):
+        """
+        Returns a user-friendly name for the chat based on the current user.
+        """
+        if self.is_group_chat:
+            return self.name or "Unnamed Group Chat"
+
+        users = self.participants.exclude(id=current_user.id)  # Exclude the current user
+        if users.count() == 1:
+            return users.first().username  # Return the other participant's name
+
+        return "Empty Chat" if users.count() == 0 else "Group Chat"
 
 
 class MessageQuerySet(models.QuerySet):

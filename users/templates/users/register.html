@@ -3,11 +3,18 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-    <h1>Register</h1>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
-    </form>
-    <p>Already have an account? <a href="{% url 'login' %}">Login Here</a></p>
+    <div id="signup-page" class="page active">
+        <div class="auth-container">
+            <h1>Create Account</h1>
+            <form method="POST" id="signup-form" class="auth-form">
+                {% csrf_token %}
+                <input type="text" name="{{ form.username.name }}" placeholder="Username" required>
+                <input type="password" name="{{ form.password1.name }}" placeholder="Password" required>
+                <input type="password" name="{{ form.password2.name }}" placeholder="Confirm Password" required>
+                <button type="submit">Register</button>
+            </form>
+            <p>Already have an account? <a href="{% url 'login' %}" id="show-login">Login</a></p>
+        </div>
+    </div>
+    
 {% endblock %}
