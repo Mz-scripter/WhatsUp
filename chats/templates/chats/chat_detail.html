@@ -7,9 +7,12 @@
     <div id="chat-detail-page" class="page active">
         <header class="chat-header">
             <div class="chat-header-left">
-                <button id="back-to-list" class="back-button">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
+                <a href="{% url 'chat_list' %}">
+                    <button id="back-to-list" class="back-button">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </a>   
+                
                 <div class="chat-info">
                     <h3 class="chat-title">{{ chat_name }}</h3>
                     <span class="chat-participants">3 participants</span>
@@ -32,7 +35,25 @@
             </div>
         {% endif %} -->
 
-        <div id="messages" class="messages">
+        <div class="messages-container" id="messages-container">
+            {% for message in chat_messages %}
+                <div id="message-{{ message.id }}" class="message {% if message.is_anonymous or message.sender != user %}received{% else %}sent{% endif %} {% if message.is_anonymous %}anonymous{% endif %}">
+                    <div class="message-header">
+                        <span class="message-sender">{{ message.get_sender_display }}</span>
+                        <button class="message-options">⋮</button>
+                    </div>
+                    <div class="message-content">{{ message.content }}</div>
+                    <div class="message-timestamp">{{ message.timestamp|date:"g:iA" }}</div>
+                    <div class="options-dropdown">
+                        <button class="reply-btn" onclick="replyToMessage({{ message.id }})">Reply</button>
+                        <button class="edit-btn" onclick="editMessage({{ message.id }})">Edit</button>
+                        <button class="delete-btn" onclick="showDeleteOptions({{ message.id }})">Delete</button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- <div id="messages" class="messages">
             {% for message in chat_messages %}
                 <div id="message-{{ message.id }}" class="message {% if message.sender == user %}sent{% else %}received{% endif %} {% if message.is_anonymous %}anonymous{% endif %}">
                     {% if message.reply_to %}
@@ -58,7 +79,7 @@
                 </div>
             {% endfor %}
             <div id="typing-indicator" class="typing-indicator"></div>
-        </div>
+        </div> -->
 
         <!-- <div class="footer">
             <form id="message-form">
@@ -107,28 +128,38 @@
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            const messagesDiv = document.getElementById('messages');
+            const messagesDiv = document.getElementById('messages-container');
 
             if (data.type === 'chat_message') {
                 const newMessage = document.createElement('div');
                 newMessage.id = 'message-' + data.message_id;
                 const alignment = data.sender === currentUser ? 'sent' : 'received';
-                const anonymousClass = data.is_anonymous ? 'anonymous' : '';
-                newMessage.className = `message ${alignment} ${anonymousClass}`;
+                
+                newMessage.className = `message ${alignment}`;
+        
                 let html = `
-                    <div class="bubble">
-                        <strong>${data.sender}</strong>
-                        <p>${data.message}</p>
-                        <div class="timestamp">${data.timestamp}</div>
-                        <div>
-                            <button onclick="showDeleteOptions(${data.message_id})">Delete</button>`;
-                if (data.sender === currentUser) {
-                    html += `<button onclick="editMessage(${data.message_id})">Edit</button>`;
-                }
-                html += `<button onclick="replyToMessage(${data.message_id})">Reply</button></div></div>`;
-                if (data.reply_to_id) {
-                    html = `<div class="reply-snippet" onclick="scrollToMessage(${data.reply_to_id})">Replying to ${data.reply_to_sender}: ${data.reply_to_content}</div>` + html;
-                }
+                    <div class="message-header">
+                        <span class="message-sender">${data.sender}</span>
+                        <button class="message-options" onclick="toggleOptions(${data.message_id})">⋮</button>
+                    </div>
+                    <div class="message-content">${data.message}</div>
+                    <div class="message-timestamp">${data.timestamp}</div>
+                    <div class="options-dropdown">
+                        <button class="reply-btn" onclick="replyToMessage(${data.message_id})">Reply</button>`;
+                
+                        if (data.sender === currentUser) {
+                            html += `<button class="edit-btn" onclick="editMessage(${data.message_id})">Edit</button>`;
+                        }
+                        
+                        html += `<button class="delete-btn" onclick="showDeleteOptions(${data.message_id})">Delete</button>
+                            </div>`;
+                
+                // if (data.reply_to_id) {
+                //     html = `<div class="reply-snippet" onclick="scrollToMessage(${data.reply_to_id})">
+                //                 Replying to ${data.reply_to_sender}: ${data.reply_to_content}
+                //             </div>` + html;
+                // }
+                
                 newMessage.innerHTML = html;
                 messagesDiv.appendChild(newMessage);
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -278,5 +309,34 @@
             document.getElementById('message-input').focus();
             alert('Type your reply and press Send.');
         }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll(".message-options").forEach((btn) => {
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+    
+                    // Find the closest message element and its corresponding dropdown
+                    const message = btn.closest(".message");
+                    const dropdown = message.querySelector(".options-dropdown");
+    
+                    // Close any other open dropdowns
+                    document.querySelectorAll(".options-dropdown.active").forEach((openDropdown) => {
+                        if (openDropdown !== dropdown) {
+                            openDropdown.classList.remove("active");
+                        }
+                    });
+    
+                    // Toggle the clicked dropdown
+                    dropdown.classList.toggle("active");
+                });
+            });
+    
+            // Close dropdown if clicking outside
+            document.addEventListener("click", () => {
+                document.querySelectorAll(".options-dropdown.active").forEach((dropdown) => {
+                    dropdown.classList.remove("active");
+                });
+            });
+        });
     </script>
 {% endblock %}
