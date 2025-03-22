@@ -15,25 +15,20 @@
                 
                 <div class="chat-info">
                     <h3 class="chat-title">{{ chat_name }}</h3>
-                    <span class="chat-participants">3 participants</span>
+                    <span class="chat-participants">{{ chat_room.participants.all|length }} participants</span>
                 </div>
             </div>
+            {% if chat_room.is_group_chat %}
             <div class="chat-header-right">
-                <button id="chat-settings" class="settings-button">
-                    <i class="fas fa-cog"></i>
-                </button>
+                <a href="{% url 'chat_management' chat_room.id %}">
+                    <button id="chat-settings" class="settings-button">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </a>
             </div>
+            {% endif %}
         </header>
-        <!-- {% if chat_room.is_group_chat and user in chat_room.admins.all %}
-            <div class="management">
-                <h2>Management</h2>
-                <a href="{% url 'add_participants' chat_room.id %}">Add Participants</a>
-                <a href="{% url 'remove_participants' chat_room.id %}">Remove Participants</a>
-                <a href="{% url 'designate_admin' chat_room.id %}">Designate Admin</a>
-                <a href="{% url 'rename_chat_room' chat_room.id %}">Rename Chat</a>
-                <a href="{% url 'delete_chat_room' chat_room.id %}">Delete Chat</a>
-            </div>
-        {% endif %} -->
+
 
         <div class="messages-container" id="messages-container">
             {% for message in chat_messages %}
