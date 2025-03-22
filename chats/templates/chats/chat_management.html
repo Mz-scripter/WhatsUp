@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- {% block title %}Chat Settings{% endblock %} -->
+    <div id="chat-settings-page" class="page active">
+        <header class="settings-header">
+            <a href="{% url 'chat_detail' chat_room.id %}" class="chat-link">
+                <button id="back-to-list" class="back-button">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </a> 
+            <h3>Chat Settings</h3>
+        </header>
+
+        
+        <div class="settings-content">
+            {% if user in chat_room.admins.all %}
+            <div class="chat-management-section">
+                <h4>Chat Management</h4>
+                <a href="{% url 'add_participants' chat_room.id %}" class="chat-link">
+                    <button id="add-user-btn" class="settings-button">
+                        <i class="fas fa-user-plus"></i>
+                        Add User
+                    </button>
+                </a>
+                <a href="{% url 'rename_chat_room' chat_room.id %}" class="chat-link">
+                    <button id="rename-chat-btn" class="settings-button">
+                        <i class="fas fa-edit"></i>
+                        Rename Chat Room
+                    </button>
+                </a>
+                <a href="{% url 'delete_chat_room' chat_room.id %}" class="chat-link">
+                    <button id="delete-chat-btn" class="settings-button danger">
+                        <i class="fas fa-trash"></i>
+                        Delete Chat Room
+                    </button>
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="participants-section">
+                <h4>Participants</h4>
+                <div id="participants-list" class="participants-list">
+                    {% for participant in participants %}
+                        <div class="participant-item">
+                            <div class="participant-info">
+                                <i class="fas fa-user"></i>
+                                <span>{{ participant.username }}</span>
+                                {% if participant in chat_room.admins.all %} <span class="admin-badge">Admin</span> {% endif %}
+                            </div>
+                            <div class="participant-actions">
+                                <button class="participant-menu-button">⋮</button>
+                                <div class="participant-dropdown">
+                                    {% if participant not in chat_room.admins.all %}
+                                        <a href="{% url 'designate_admin' chat_room.id participant.id %}" class="chat-link">
+                                            <button class="make-admin-btn">Make Admin</button>
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'remove_admin' chat_room.id participant.id %}" class="chat-link">
+                                            <button class="remove-admin-btn">Remove Admin</button>
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'remove_participants' chat_room.id participant.id %}" class="chat-link">
+                                        <button class="remove-user-btn">Remove User</button>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+            
+     
+
+        
+    </div>
+
+    <script>
+    document.querySelectorAll('.participant-menu-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dropdown = button.nextElementSibling;
+            // Close all other dropdowns
+            document.querySelectorAll('.participant-dropdown.active').forEach(d => {
+                if (d !== dropdown) d.classList.remove('active');
+            });
+            dropdown.classList.toggle('active');
+        });
+    });
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.participant-dropdown.active').forEach(dropdown => {
+            dropdown.classList.remove('active');
+        });
+    });
+    </script>
+
+{% endblock %}
