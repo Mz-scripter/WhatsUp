@@ -46,6 +46,12 @@
                     </div>
                 </div>
             {% endfor %}
+
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
         </div>
 
         <!-- <div id="messages" class="messages">
@@ -183,14 +189,6 @@
                 }
             } else if (data.type === 'typing_event' && data.sender !== currentUser) {
                 if (data.is_typing) {
-                    typingIndicator.innerHTML = `
-                        <div class="typing-bubble">
-                            <div class="typing-dots">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>`;
                     typingIndicator.classList.add('active');
                     clearTimeout(typingTimer);
                     typingTimer = setTimeout(() => {
