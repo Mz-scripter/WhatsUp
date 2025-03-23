@@ -361,6 +361,52 @@ body {
     color: #128C7E;
 }
 
+/* Typing Indicator */
+.typing-indicator {
+    display: none;
+    max-width: 65%;
+    margin: 8px;
+    padding: 12px 15px;
+    border-radius: 7.5px;    
+    background-color: white;
+    margin-right: auto;
+    position: relative;
+}
+
+.typing-indicator.active {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.typing-indicator .dot {
+    width: 6px;
+    height: 6px;
+    background-color: #8696a0;
+    border-radius: 50%;
+    animation: typing-animation 1.4s infinite;
+    opacity: 0.5;
+}
+
+.typing-indicator .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing-animation {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    30% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}
+
 /* Settings Page */
 .settings-header {
     background-color: #128C7E;
