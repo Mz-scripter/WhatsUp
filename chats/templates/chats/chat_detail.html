@@ -33,8 +33,17 @@
         <div class="messages-container" id="messages-container">
             {% for message in chat_messages %}
                 <div id="message-{{ message.id }}" class="message {% if message.is_anonymous or message.sender != user %}received{% else %}sent{% endif %} {% if message.is_anonymous %}anonymous{% endif %}">
+                    {% if message.reply_to %}
+                        <div class="reply-snippet" onclick="scrollToMessage({{ message.reply_to.id }})">
+                            <p class="reply-sender">{{ message.reply_to.get_sender_display }}</p>
+                            <p>{{ message.reply_to.content|truncatechars:50 }}</p>
+                        </div>
+
+                    {% endif %}
                     <div class="message-header">
-                        <span class="message-sender">{{ message.get_sender_display }}</span>
+                        {% if not message.sender == user %}
+                            <span class="message-sender">{{ message.get_sender_display }}</span>
+                        {% endif %}
                         <button class="message-options">⋮</button>
                     </div>
                     <div class="message-content">{{ message.content }}</div>
@@ -94,6 +103,7 @@
             </form>
         </div> -->
 
+        <div id="reply-preview" class="reply-preview"></div>
         <div class="message-input-container">
             <!-- Anonymous toggle button -->
             {% if chat_room.is_group_chat %}
@@ -121,6 +131,7 @@
         const messageInput = document.getElementById('message-input');
         const anonymousIcon = document.getElementById('anonymous-toggle');
         const isAnonymousInput = document.getElementById('is-anonymous');
+        const replyPreview = document.getElementById('reply-preview');
 
         let typingTimer;
         let isTyping = false;
@@ -140,7 +151,7 @@
         
                 let html = `
                     <div class="message-header">
-                        <span class="message-sender">${data.sender}</span>
+                        ${data.sender !== currentUser ? `<span class="message-sender">${data.sender}</span>`: ''}
                         <button class="message-options" onclick="toggleOptions(${data.message_id})">⋮</button>
                     </div>
                     <div class="message-content">${data.message}</div>
@@ -155,11 +166,12 @@
                         html += `<button class="delete-btn" onclick="showDeleteOptions(${data.message_id})">Delete</button>
                             </div>`;
                 
-                // if (data.reply_to_id) {
-                //     html = `<div class="reply-snippet" onclick="scrollToMessage(${data.reply_to_id})">
-                //                 Replying to ${data.reply_to_sender}: ${data.reply_to_content}
-                //             </div>` + html;
-                // }
+                if (data.reply_to_id) {
+                    html = `<div class="reply-snippet" onclick="scrollToMessage(${data.reply_to_id})">
+                                <p>${data.reply_to_sender}</p> 
+                                <p>${data.reply_to_content}</p>
+                            </div>` + html;
+                }
                 
                 newMessage.innerHTML = html;
                 messagesDiv.appendChild(newMessage);
@@ -299,8 +311,26 @@
 
         function replyToMessage(messageId) {
             replyToId = messageId;
-            document.getElementById('message-input').focus();
-            alert('Type your reply and press Send.');
+            replyPreview.classList.add('active');
+            const messageElement = document.getElementById('message-' + messageId);
+            const senderName = messageElement.querySelector('.message-sender')?.textContent || "Unknown";
+            const messageContent = messageElement.querySelector('.message-content')?.textContent || "";
+            replyPreview.innerHTML = `
+                <div class="reply-info">
+                    <span class="reply-to">Replying to ${senderName}</span>
+                    <span class="reply-text">${messageContent}</span>
+                    <button class="cancel-reply" onclick="cancelReply()">x</button>
+                </div>
+            `;
+            messageInput.focus();
+        }
+
+        function cancelReply() {
+            const replyPreview = document.getElementById('reply-preview');
+            replyPreview.innerHTML = ''; // Clear preview
+            replyPreview.classList.remove('active');
+            replyPreview.style.display = 'none'; // Hide it
+            replyToId = null; // Reset reply ID
         }
 
         document.addEventListener("DOMContentLoaded", () => {
