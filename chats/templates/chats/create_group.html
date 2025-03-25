@@ -3,11 +3,86 @@
 {% block title %}Create Group Chat{% endblock %}
 
 {% block content %}
-    <h1>Create Group Chat</h1>
+    <div id="create-group-page" class="page active">
+        <header class="chat-header">
+            <div class="chat-header-left">
+                <a href="">
+                    <button id="back-to-new-chat" class="back-button">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </a>
+
+                <div class="chat-info">
+                    <h2>Create Group</h2>
+                </div>
+            </div>
+        </header>
+        <form class="create-group-container" action="{% url 'create_group' %}" method="POST">
+            <div class="group-info-form">
+                <div class="group-icon-upload">
+                    <i class="fas fa-users"></i>
+                </div>
+                {% csrf_token %}
+                <input type="text" id="group-name" placeholder="Group Name" name="group_name" required>
+            </div>
+            <div class="users-list-container">
+                <h3>Select Participants</h3>
+                <div class="selected-users-count">Selected:
+                    <span id="selected-count">0</span>
+                </div>
+                <div id="group-users" class="users-list">
+                    {% for user in users %}
+                        <div class="user-item" data-user-id="{{ user.id }}">
+                            <i class="fas fa-user"></i>
+                            <span>{{ user.username }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <input type="hidden" name="participants" id="selected-users">
+
+            <button type="submit" id="create-group-submit" class="create-group-submit" disabled>Create Group</button>
+        
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const selectedUsers = new Set();
+            const selectedUsersInput = document.getElementById('selected-users');
+            const selectedCountSpan = document.getElementById('selected-count');
+            const createGroupSubmitBtn = document.getElementById('create-group-submit');
+            const groupNameInput = document.getElementById('group-name');
+
+            document.querySelectorAll(".user-item").forEach(item => {
+                item.addEventListener('click', () => {
+                    item.classList.toggle('selected');
+                    const userId = item.dataset.userId;
+
+                    if (selectedUsers.has(userId)) {
+                        selectedUsers.delete(userId);
+                    } else {
+                        selectedUsers.add(userId)
+                    }
+                    document.getElementById('selected-users').value = Array.from(selectedUsers).join(',');
+                    updateSelectedCount();
+                });
+            });
+
+            function updateSelectedCount() {
+                const count = selectedUsers.size;
+                selectedCountSpan.textContent = count;
+                createGroupSubmitBtn.disabled = count < 2 || !groupNameInput.value.trim();
+            }
+
+            groupNameInput.addEventListener('input', updateSelectedCount);
+        })
+    </script>
+    <!-- <h1>Create Group Chat</h1>
     <form method="POST">
         {% csrf_token %}
         <label for="group_name">Group Name:</label>
         <input type="text" id="group_name" name="group_name" required>
         <button type="submit">Create</button>
-    </form>
+    </form> -->
 {% endblock %}
