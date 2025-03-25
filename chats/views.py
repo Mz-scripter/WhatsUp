@@ -46,7 +46,9 @@ def create_group_chat(request):
 
 @login_required
 def add_participants(request, chat_room_id):
+    request.session['previous_page'] = request.META.get('HTTP_REFERER')
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
+    users = User.objects.exclude(id__in=chat_room.participants.values_list('id', flat=True))
     
     if not chat_room.is_group_chat:
         return HttpResponseForbidden("Cannot add participants to one-on-one chat.")
@@ -55,16 +57,19 @@ def add_participants(request, chat_room_id):
         return HttpResponseForbidden("Only admins can add participants.")
     
     if request.method == 'POST':
-        usernames = request.POST.get('usernames', '').split(',')
-        users_to_add = User.objects.filter(username__in=[u.strip() for u in usernames])
+        participant_ids = request.POST.getlist('participants', '')
         
-        for user in users_to_add:
-            if user not in chat_room.participants.all():
-                chat_room.participants.add(user)
-        messages.success(request, "Participants added successfully.")
-        return redirect('chat_detail', chat_room_id=chat_room.id)
+        participant_ids = [int(id) for id in participant_ids[0].split(',')]
+        
+        selected_users = User.objects.filter(id__in=participant_ids)
+        chat_room.participants.add(*selected_users)
+        return redirect('chat_management', chat_room_id=chat_room.id)
     
-    return render(request, 'chats/add_participants.html', {'chat_room': chat_room})
+    context = {
+        'chat_room': chat_room,
+        'users': users
+    }
+    return render(request, 'chats/add_participants.html', context)
 
 @login_required
 def remove_participants(request, chat_room_id, user_id):
@@ -130,6 +135,7 @@ def remove_admin(request, chat_room_id, user_id):
 
 @login_required
 def rename_chat_room(request, chat_room_id):
+    request.session['previous_page'] = request.META.get('HTTP_REFERER')
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
     
     if not chat_room.is_group_chat:

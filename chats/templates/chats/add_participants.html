@@ -3,11 +3,71 @@
 {% block title %}Add Participants{% endblock %}
 
 {% block content %}
-    <h1>Add Participants to {{ chat_room.name }}</h1>
+    <div id="add-users-page" class="page active">
+        <header class="chat-header">
+            <div class="chat-header-left">
+                <a href="{{ request.session.previous_page }}" class="chat-link">
+                    <button id="back-to-settings" class="back-button">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>  
+                </a>
+                <div class="chat-info">
+                    <h2>Add Users</h2>
+                </div>
+            </div>
+        </header>
+        <form method="POST" class="users-list-container">
+            {% csrf_token %}
+            <h3>Select Users to Add</h3>
+            <div class="selected-users-count">Selected:
+                <span id="selected-count">0</span>
+            </div>
+            <div id="group-users" class="users-list">
+                {% for user in users %}
+                    <div class="user-item" data-user-id="{{ user.id }}">
+                        <i class="fas fa-user"></i>
+                        <span>{{ user.username }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <input type="hidden" name="participants" id="selected-users">
+
+            <button type="submit" id="add-users-submit" class="action-button" disabled>Create Group</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectedUsers = new Set();
+            const selectedUsersInput = document.getElementById('selected-users');
+            const selectedCountSpan = document.getElementById('selected-count');
+            const addUsersSubmitBtn = document.getElementById('add-users-submit');
+
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    item.classList.toggle('selected');
+                    const userId = item.dataset.userId;
+
+                    if (selectedUsers.has(userId)) {
+                        selectedUsers.delete(userId);
+                    } else {
+                        selectedUsers.add(userId);
+                    }
+
+                    selectedUsersInput.value = Array.from(selectedUsers).join(',');
+                    selectedCountSpan.textContent = selectedUsers.size;
+
+                    addUsersSubmitBtn.disabled = selectedUsers.size === 0;
+                });
+            });
+        })
+    </script>
+    <!-- <h1>Add Participants to {{ chat_room.name }}</h1>
     <form method="POST">
         {% csrf_token %}
         <label for="usernames">Enter usernames to add (comma-separated):</label>
         <input type="text" id="usernames" name="usernames">
         <button type="submit">Add</button>
-    </form>
+    </form> -->
 {% endblock %}
