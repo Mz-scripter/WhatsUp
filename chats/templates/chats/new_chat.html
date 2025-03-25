@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}New Chat{% endblock %}
+{% block content %}
+
+    <div id="new-chat-page" class="page active">
+        <header class="chat-header">
+            <div class="chat-header-left">
+                <a href="{% url 'chat_list' %}" class="chat-link">
+                    <button id="back-to-chats" class="back-button">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </a>
+                <div class="chat-info">
+                    <h2>New Chat</h2>
+                </div>
+                
+                
+            </div>
+        </header>
+        <div class="new-chat-options">
+            <a href="{% url 'create_group' %}" class="chat-link">
+                <button id="create-group-btn" class="new-chat-option">
+                    <i class="fas fa-users"></i>
+                    <span>Create Group Chat</span>
+                </button>
+            </a>
+            <div class="users-list-container">
+                <h3>Start Chat with Users</h3>
+                <div id="direct-chat-users" class="users-list">
+                    {% for user in users %}
+                        <a href="{% url 'create_one_on_one' user.id %}" class="chat-link">
+                            <div class="user-item">
+                                <i class="fas fa-user"></i>
+                                <span>{{ user.username }}</span>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

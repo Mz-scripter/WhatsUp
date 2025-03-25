@@ -6,6 +6,13 @@ from .forms import MessageForm
 from django.http import HttpResponseForbidden
 from django.contrib import messages
 
+@login_required
+def new_chat(request):
+    users = User.objects.exclude(id=request.user.id)
+    context = {
+        'users': users
+    }
+    return render(request, 'chats/new_chat.html', context)
 
 @login_required
 def create_one_on_one_chat(request, user_id):
@@ -16,13 +23,26 @@ def create_one_on_one_chat(request, user_id):
 
 @login_required
 def create_group_chat(request):
+    users = User.objects.exclude(id=request.user.id)
+    
     if request.method == 'POST':
         name = request.POST.get('group_name')
+        participant_ids = request.POST.getlist('participants', '')
+        
+        participant_ids = [int(id) for id in participant_ids[0].split(',')]
+        
         chat_room = ChatRoom.objects.create(name=name, is_group_chat=True, owner=request.user)
         chat_room.participants.add(request.user)
         chat_room.admins.add(request.user)
+        
+        selected_users = User.objects.filter(id__in=participant_ids)
+        chat_room.participants.add(*selected_users)
         return redirect('chat_detail', chat_room_id=chat_room.id)
-    return render(request, 'chats/create_group.html')
+    
+    context = {
+        'users': users
+    }
+    return render(request, 'chats/create_group.html', context)
 
 @login_required
 def add_participants(request, chat_room_id):
