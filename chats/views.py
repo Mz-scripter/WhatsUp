@@ -23,6 +23,7 @@ def create_one_on_one_chat(request, user_id):
 
 @login_required
 def create_group_chat(request):
+    request.session['previous_page'] = request.META.get('HTTP_REFERER')
     users = User.objects.exclude(id=request.user.id)
     
     if request.method == 'POST':

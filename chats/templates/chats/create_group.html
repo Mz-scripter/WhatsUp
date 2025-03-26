@@ -6,7 +6,7 @@
     <div id="create-group-page" class="page active">
         <header class="chat-header">
             <div class="chat-header-left">
-                <a href="">
+                <a href="{{ request.session.previous_page }}" class="chat-link">
                     <button id="back-to-new-chat" class="back-button">
                         <i class="fas fa-arrow-left"></i>
                     </button>
@@ -23,7 +23,7 @@
                     <i class="fas fa-users"></i>
                 </div>
                 {% csrf_token %}
-                <input type="text" id="group-name" placeholder="Group Name" name="group_name" required>
+                <input type="text" id="group-name" placeholder="Group Name" name="group_name" autocomplete="off" required>
             </div>
             <div class="users-list-container">
                 <h3>Select Participants</h3>
