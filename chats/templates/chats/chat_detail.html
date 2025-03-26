@@ -63,46 +63,6 @@
             </div>
         </div>
 
-        <!-- <div id="messages" class="messages">
-            {% for message in chat_messages %}
-                <div id="message-{{ message.id }}" class="message {% if message.sender == user %}sent{% else %}received{% endif %} {% if message.is_anonymous %}anonymous{% endif %}">
-                    {% if message.reply_to %}
-                        <div class="reply-snippet" onclick="scrollToMessage({{ message.reply_to.id }})">
-                            Replying to {{ message.reply_to.get_sender_display }}: {{ message.reply_to.content|truncatechars:50 }}
-                        </div>
-                    {% endif %}
-                    <div class="bubble">
-                        <strong>{{ message.get_sender_display }}</strong>
-                        <p>{{ message.content }}</p>
-                        <div class="timestamp">{{ message.timestamp|date:"g:iA" }}</div>
-                        {% if message.edited_at %}
-                            <span class="edited">Edited</span>
-                        {% endif %}
-                        <div>
-                            <button onclick="showDeleteOptions({{ message.id }})">Delete</button>
-                            {% if message.sender == user %}
-                                <button onclick="editMessage({{ message.id }})">Edit</button>
-                            {% endif %}
-                            <button onclick="replyToMessage({{ message.id }})">Reply</button>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-            <div id="typing-indicator" class="typing-indicator"></div>
-        </div> -->
-
-        <!-- <div class="footer">
-            <form id="message-form">
-                <input type="text" id="message-input" placeholder="Type a message">
-                {% if chat_room.is_group_chat %}
-                    <div>
-                        {{ form.is_anonymous.label_tag }} {{ form.is_anonymous }}
-                    </div>
-                {% endif %}
-                <button type="submit">Send</button>
-            </form>
-        </div> -->
-
         <div id="reply-preview" class="reply-preview"></div>
         <div class="message-input-container">
             <!-- Anonymous toggle button -->
@@ -113,7 +73,7 @@
             <input type="hidden" id="is-anonymous" name="is_anonymous" value="false">
             {% endif %}
             <form class="message-input-wrapper" id="message-form">
-                <input type="text" id="message-input" placeholder="Type a message">
+                <input type="text" id="message-input" placeholder="Type a message" autocomplete="off">
                 <!-- Send button with paper airplane icon -->
                 <button type="submit" id="send-message" class="send-button" title="Send message">
                     <i class="fas fa-paper-plane"></i>
