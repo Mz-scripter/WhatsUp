@@ -8,12 +8,17 @@ channels_redis==4.2.1
 constantly==23.10.4
 cryptography==44.0.2
 daphne==4.1.2
+dj-database-url==2.3.0
 Django==5.1.6
+gunicorn==23.0.0
 hyperlink==21.0.0
 idna==3.10
 incremental==24.7.2
 msgpack==1.1.0
+packaging==24.2
 pillow==11.1.0
+psycopg-binary==3.2.6
+psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pyasn1_modules==0.4.1
 pycparser==2.22
@@ -28,4 +33,5 @@ Twisted==24.11.0
 txaio==23.1.1
 typing_extensions==4.12.2
 tzdata==2025.1
+whitenoise==6.9.0
 zope.interface==7.2
