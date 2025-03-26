@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block title %}Settings{% endblock %}
 
 {% block content %}
 
-<!-- {% block title %}Chat Settings{% endblock %} -->
     <div id="chat-settings-page" class="page active">
         <header class="settings-header">
             <a href="{% url 'chat_detail' chat_room.id %}" class="chat-link">

@@ -87,24 +87,6 @@ def remove_participants(request, chat_room_id, user_id):
         chat_room.admins.remove(user)
     return redirect('chat_management', chat_room_id=chat_room.id)
     
-    # if request.method == 'POST':
-    #     usernames = request.POST.get('usernames', '').split(',')
-    #     users_to_remove = User.objects.filter(username__in=[u.strip() for u in usernames])
-        
-    #     for user in users_to_remove:
-    #         if user == chat_room.owner:
-    #             messages.error(request, "Cannot remove the group owner.")
-    #         elif user in chat_room.participants.all():
-    #             if user in chat_room.admins.all() and chat_room.admins.count() == 1:
-    #                 messages.error(request, "Cannot remove the last admin.")
-    #             else:
-    #                 chat_room.participants.remove(user)
-    #                 if user in chat_room.admins.all():
-    #                     chat_room.admins.remove(user)
-    #     messages.success(request, "Participants removed successfully.")
-    #     return redirect('chat_detail', chat_room_id=chat_room.id)
-    # return render(request, 'chats/remove_participants.html', {'chat_room': chat_room})
-
 @login_required
 def designate_admin(request, chat_room_id, user_id):
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
@@ -206,8 +188,7 @@ def chat_management(request, chat_room_id):
     chat_room = ChatRoom.objects.get(id=chat_room_id)
     chat_name = chat_room.get_chat_name(request.user)
     participants = chat_room.participants.all()
-    # if request.user not in chat_room.admins.all():
-    #     return HttpResponseForbidden("Only admins can manage the chat.")
+
     context = {
         'chat_room': chat_room,
         'chat_name': chat_name,
