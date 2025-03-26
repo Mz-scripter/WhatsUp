@@ -857,6 +857,73 @@ body {
     animation-delay: 0.4s;
 }
 
+/* Delete Confirmation Page */
+.delete-confirmation-page {
+    background-color: white;
+}
+
+.delete-confirmation-container {
+    padding: 20px;
+    text-align: center;
+}
+
+.delete-icon {
+    width: 80px;
+    height: 80px;
+    background-color: #fff3f3;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto;
+}
+
+.delete-icon i {
+    font-size: 40px;
+    color: #dc3545;
+}
+
+.delete-title {
+    font-size: 24px;
+    color: #dc3545;
+    margin-bottom: 10px;
+}
+
+.delete-message {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.delete-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.delete-button {
+    padding: 12px 24px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-button.cancel {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    color: #666;
+}
+
+.delete-button.confirm {
+    background-color: #dc3545;
+    border: none;
+    color: white;
+}
+
+.delete-button:hover {
+    transform: translateY(-1px);
+}
+
 @keyframes typing-animation {
     0%, 60%, 100% {
         transform: translateY(0);

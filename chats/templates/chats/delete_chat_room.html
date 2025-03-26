@@ -3,11 +3,40 @@
 {% block title %}Delete Chat Room{% endblock %}
 
 {% block content %}
-    <h1>Delete {{ chat_room.name }}</h1>
+    <div id="delete-confirmation-page" class="page active">
+        <header class="chat-header">
+            <div class="chat-header-left">
+                <a href="{% url 'chat_management' chat_room.id %}" class="chat-link">
+                    <button id="back-from-delete" class="back-button">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </a>
+                <div class="chat-info">
+                    <h2>Delete {{ chat_room.name }}</h2>
+                </div>
+            </div>
+        </header>
+
+        <form class="delete-confirmation-container" method="POST">
+            {% csrf_token %}
+            <div class="delete-icon">
+                <i class="fas fa-trash"></i>
+            </div>
+            <h3 class="delete-title">Delete {{ chat_room.name }}?</h3>
+            <p class="delete-message">This action cannot be undone. All messages will be permanently deleted.</p>
+            <div class="delete-actions">
+                <a href="{% url 'chat_management' chat_room.id %}" id="cancel-delete" class="chat-link delete-button cancel">
+                    Cancel
+                </a>
+                <button type="submit" id="confirm-delete" class="delete-button confirm">Delete</button>
+            </div>
+        </form>
+    </div>
+    <!-- <h1>Delete {{ chat_room.name }}</h1>
     <p>Are you sure you want to delete this chat room? This action cannot be undone.</p>
     <form method="POST">
         {% csrf_token %}
         <button type="submit">Yes, delete</button>
         <a href="{% url 'chat_detail' chat_room.id %}">Cancel</a>
-    </form>
+    </form> -->
 {% endblock %}
