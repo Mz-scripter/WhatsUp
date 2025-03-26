@@ -29,7 +29,7 @@ Follow these steps to set up WhatsUp locally. You’ll need Python, pip, Git, an
     ```
 4. **Create a Virtual Environment**
     ```
-        python -m venv venv
+    python -m venv venv
     ```
 5. **Activate the Virtual Environment**
     ```
@@ -43,7 +43,7 @@ Follow these steps to set up WhatsUp locally. You’ll need Python, pip, Git, an
     ```
     python manage.py migrate
     ```
-8. **Create a Superuser (Optional)
+8. **Create a Superuser (Optional)**
     ```
     python manage.py runserver
     ```
@@ -64,11 +64,11 @@ Follow these steps to set up WhatsUp locally. You’ll need Python, pip, Git, an
 
 
 ## Troubleshooting ⚙
-    - **Redis Not Running**
+    - Redis Not Running
         Ensure Redis is installed and running. Check with `redis-server`
-    - **Static Files Not Loading**
+    - Static Files Not Loading
         Run `python manage.py collectstatic` and verify `STATIC_URL` in `settings.py`
-    - **WebSocket Errors**
+    - WebSocket Errors
         Confirm Dango channels is configured in `settings.py`
 
 
