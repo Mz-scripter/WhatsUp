@@ -7,9 +7,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <link rel="icon" href="{% static 'images/whatsup.png' %}" type="image/x-icon">
     <title>WhatsUp - {% block title %}{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <meta name="description" content="WhatsUp is a real-time chat application built with Django and Django Channels, offering features like group chats, anonymous messaging, and more.">
+
+    <meta property="og:title" content="WhatsUp - Real-time Chat Application">
+    <meta property="og:description" content="WhatsUp is a real-time chat application built with Django and Django Channels, offering features like group chats, anonymous messaging, and more.">
+    <meta property="og:image" content="{% static 'images/whatsup.png' %}">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="WhatsUp - Real-time Chat Application">
+    <meta name="twitter:description" content="WhatsUp is a real-time chat application built with Django and Django Channels, offering features like group chats, anonymous messaging, and more.">
+    <meta name="twitter:image" content="{% static 'images/whatsup.png' %}">
 </head>
 <body>
    
