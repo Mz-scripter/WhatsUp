@@ -1009,3 +1009,37 @@ body {
     outline: 2px solid #d1d5db; /* focus:ring-gray-300 equivalent */
     outline-offset: 2px;
 }
+
+/* Site Footer */
+.site-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background-color: white;
+    text-align: center;
+    border-top: 1px solid #ddd;
+}
+
+.social-links {
+    margin-bottom: 10px;
+}
+
+.social-links a {
+    color: #333;
+    font-size: 24px;
+    margin: 0 10px;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.social-links a:hover {
+    color: #128C7E;
+}
+
+.attribution {
+    color: #333;
+    font-size: 14px;
+    opacity: 0.8;
+}

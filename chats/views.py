@@ -8,9 +8,11 @@ from django.contrib import messages
 
 @login_required
 def new_chat(request):
+    page = 'no_footer'
     users = User.objects.exclude(id=request.user.id)
     context = {
-        'users': users
+        'users': users,
+        'page': page,
     }
     return render(request, 'chats/new_chat.html', context)
 
@@ -23,6 +25,7 @@ def create_one_on_one_chat(request, user_id):
 
 @login_required
 def create_group_chat(request):
+    page = 'no_footer'
     request.session['previous_page'] = request.META.get('HTTP_REFERER')
     users = User.objects.exclude(id=request.user.id)
     
@@ -41,12 +44,14 @@ def create_group_chat(request):
         return redirect('chat_detail', chat_room_id=chat_room.id)
     
     context = {
-        'users': users
+        'users': users,
+        'page': page,
     }
     return render(request, 'chats/create_group.html', context)
 
 @login_required
 def add_participants(request, chat_room_id):
+    page = 'no_footer'
     request.session['previous_page'] = request.META.get('HTTP_REFERER')
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
     users = User.objects.exclude(id__in=chat_room.participants.values_list('id', flat=True))
@@ -68,7 +73,8 @@ def add_participants(request, chat_room_id):
     
     context = {
         'chat_room': chat_room,
-        'users': users
+        'users': users,
+        'page': page,
     }
     return render(request, 'chats/add_participants.html', context)
 
@@ -166,6 +172,7 @@ def chat_list(request):
 
 @login_required
 def chat_detail(request, chat_room_id):
+    page = 'no_footer'
     chat_room = ChatRoom.objects.get(id=chat_room_id)
     chat_name = chat_room.get_chat_name(request.user)
     if request.user not in chat_room.participants.all():
@@ -181,11 +188,13 @@ def chat_detail(request, chat_room_id):
         'chat_messages': chat_messages,
         'form': form,
         'chat_name': chat_name,
+        'page': page,
     }
     return render(request, 'chats/chat_detail.html', context)
 
 @login_required
 def chat_management(request, chat_room_id):
+    page = 'no_footer'
     chat_room = ChatRoom.objects.get(id=chat_room_id)
     chat_name = chat_room.get_chat_name(request.user)
     participants = chat_room.participants.all()
@@ -194,5 +203,6 @@ def chat_management(request, chat_room_id):
         'chat_room': chat_room,
         'chat_name': chat_name,
         'participants': participants,
+        'page': page,
     }
     return render(request, 'chats/chat_management.html', context)
