@@ -6,7 +6,7 @@ from .forms import MessageForm
 from django.http import HttpResponseForbidden
 from django.contrib import messages
 
-@login_required
+@login_required(login_url='login')
 def new_chat(request):
     page = 'no_footer'
     users = User.objects.exclude(id=request.user.id)
@@ -16,14 +16,14 @@ def new_chat(request):
     }
     return render(request, 'chats/new_chat.html', context)
 
-@login_required
+@login_required(login_url='login')
 def create_one_on_one_chat(request, user_id):
     other_user = User.objects.get(id=user_id)
     chat_room = ChatRoom.objects.create(is_group_chat=False)
     chat_room.participants.add(request.user, other_user)
     return redirect('chat_detail', chat_room_id=chat_room.id)
 
-@login_required
+@login_required(login_url='login')
 def create_group_chat(request):
     page = 'no_footer'
     request.session['previous_page'] = request.META.get('HTTP_REFERER')
@@ -49,7 +49,7 @@ def create_group_chat(request):
     }
     return render(request, 'chats/create_group.html', context)
 
-@login_required
+@login_required(login_url='login')
 def add_participants(request, chat_room_id):
     page = 'no_footer'
     request.session['previous_page'] = request.META.get('HTTP_REFERER')
@@ -78,7 +78,7 @@ def add_participants(request, chat_room_id):
     }
     return render(request, 'chats/add_participants.html', context)
 
-@login_required
+@login_required(login_url='login')
 def remove_participants(request, chat_room_id, user_id):
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
     user = get_object_or_404(User, id=user_id)
@@ -94,7 +94,7 @@ def remove_participants(request, chat_room_id, user_id):
         chat_room.admins.remove(user)
     return redirect('chat_management', chat_room_id=chat_room.id)
     
-@login_required
+@login_required(login_url='login')
 def designate_admin(request, chat_room_id, user_id):
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
     user = get_object_or_404(User, id=user_id)
@@ -108,7 +108,7 @@ def designate_admin(request, chat_room_id, user_id):
     chat_room.admins.add(user)
     return redirect('chat_management', chat_room_id=chat_room.id)
 
-@login_required
+@login_required(login_url='login')
 def remove_admin(request, chat_room_id, user_id):
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
     user = get_object_or_404(User, id=user_id)
@@ -122,7 +122,7 @@ def remove_admin(request, chat_room_id, user_id):
     chat_room.admins.remove(user)
     return redirect('chat_management', chat_room_id=chat_room.id)
 
-@login_required
+@login_required(login_url='login')
 def rename_chat_room(request, chat_room_id):
     request.session['previous_page'] = request.META.get('HTTP_REFERER')
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
@@ -142,7 +142,7 @@ def rename_chat_room(request, chat_room_id):
         return redirect('chat_detail', chat_room_id=chat_room.id)
     return render(request, 'chats/rename_chat_room.html', {'chat_room': chat_room})
 
-@login_required
+@login_required(login_url='login')
 def delete_chat_room(request, chat_room_id):
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
     
@@ -159,7 +159,7 @@ def delete_chat_room(request, chat_room_id):
     return render(request, 'chats/delete_chat_room.html', {'chat_room': chat_room})
         
 
-@login_required
+@login_required(login_url='login')
 def chat_list(request):
     chat_rooms = request.user.chat_rooms.all()
     for chat_room in chat_rooms:
@@ -170,7 +170,7 @@ def chat_list(request):
         chat_room.last_message_time = last_message.timestamp if last_message else None
     return render(request, 'chats/chat_list.html', {'chat_rooms': chat_rooms})
 
-@login_required
+@login_required(login_url='login')
 def chat_detail(request, chat_room_id):
     page = 'no_footer'
     chat_room = ChatRoom.objects.get(id=chat_room_id)
@@ -192,7 +192,7 @@ def chat_detail(request, chat_room_id):
     }
     return render(request, 'chats/chat_detail.html', context)
 
-@login_required
+@login_required(login_url='login')
 def chat_management(request, chat_room_id):
     page = 'no_footer'
     chat_room = ChatRoom.objects.get(id=chat_room_id)
