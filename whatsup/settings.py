@@ -33,12 +33,12 @@ SECRET_KEY = 'django-insecure-@3pn%1u#g)1)bfh&yg0xzh8px)3k8to^xm(csi_7a6wd)_&42#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['https://whatsup-7iyr.onrender.com']
+ALLOWED_HOSTS = ['whatsup-7iyr.onrender.com']
 
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "https://whatsup-7iyr.onrender.com/"
+    "https://whatsup-7iyr.onrender.com"
 ]
 
 # Application definition
