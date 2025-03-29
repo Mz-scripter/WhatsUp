@@ -33,7 +33,13 @@ SECRET_KEY = 'django-insecure-@3pn%1u#g)1)bfh&yg0xzh8px)3k8to^xm(csi_7a6wd)_&42#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['whatsup-nhjd.onrender.com/']
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "https://whatsup-nhjd.onrender.com"
+]
 
 # Application definition
 
@@ -48,6 +54,7 @@ INSTALLED_APPS = [
     'users',
     'chats',
     'channels',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -59,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'whatsup.urls'
