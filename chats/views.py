@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from .forms import MessageForm
 from django.http import HttpResponseForbidden
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
 
 @login_required(login_url='login')
 def new_chat(request):
@@ -23,6 +24,7 @@ def create_one_on_one_chat(request, user_id):
     chat_room.participants.add(request.user, other_user)
     return redirect('chat_detail', chat_room_id=chat_room.id)
 
+@csrf_exempt
 @login_required(login_url='login')
 def create_group_chat(request):
     page = 'no_footer'
@@ -49,6 +51,7 @@ def create_group_chat(request):
     }
     return render(request, 'chats/create_group.html', context)
 
+@csrf_exempt
 @login_required(login_url='login')
 def add_participants(request, chat_room_id):
     page = 'no_footer'
@@ -122,6 +125,7 @@ def remove_admin(request, chat_room_id, user_id):
     chat_room.admins.remove(user)
     return redirect('chat_management', chat_room_id=chat_room.id)
 
+@csrf_exempt
 @login_required(login_url='login')
 def rename_chat_room(request, chat_room_id):
     request.session['previous_page'] = request.META.get('HTTP_REFERER')
@@ -142,6 +146,7 @@ def rename_chat_room(request, chat_room_id):
         return redirect('chat_detail', chat_room_id=chat_room.id)
     return render(request, 'chats/rename_chat_room.html', {'chat_room': chat_room})
 
+@csrf_exempt
 @login_required(login_url='login')
 def delete_chat_room(request, chat_room_id):
     chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
