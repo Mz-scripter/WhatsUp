@@ -225,9 +225,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'sender': msg.get_sender_display(),
                 'timestamp': formatted_time,
                 'reply_to_id': reply_to_msg.id,
-                'reply_to_sender': reply_to_msg.sender.username,
+                'reply_to_sender': reply_to_msg.get_sender_display(),
+                'reply_to_is_anonymous': reply_to_msg.is_anonymous,
                 'reply_to_content': reply_to_msg.content[:50],
-                'read_by': [self.user.id]
+                'read_by': [self.user.id],
             }
         )
 

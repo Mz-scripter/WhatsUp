@@ -87,3 +87,7 @@ class Message(models.Model):
         
     def get_sender_display(self):
         return "Anonymous" if self.is_anonymous else self.sender.username
+    
+    @property
+    def sender_display(self):
+        return "Anonymous" if self.is_anonymous else self.sender.username

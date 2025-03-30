@@ -35,7 +35,7 @@
                 <div id="message-{{ message.id }}" class="message {% if message.is_anonymous or message.sender != user %}received{% else %}sent{% endif %} {% if message.is_anonymous %}anonymous{% endif %}">
                     {% if message.reply_to %}
                         <div class="reply-snippet" onclick="scrollToMessage({{ message.reply_to.id }})">
-                            <p class="reply-sender">{{ message.reply_to.get_sender_display }}</p>
+                            <p class="reply-sender">{{ message.reply_to.sender_display }}</p>
                             <p>{{ message.reply_to.content|truncatechars:50 }}</p>
                         </div>
 
@@ -55,12 +55,12 @@
                     </div>
                 </div>
             {% endfor %}
+        </div>
 
-            <div class="typing-indicator" id="typing-indicator">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </div>
+        <div class="typing-indicator" id="typing-indicator">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
         </div>
 
         <div id="reply-preview" class="reply-preview"></div>
@@ -113,7 +113,7 @@
                 let html = `
                     <div class="message-header">
                         ${data.sender !== currentUser ? `<span class="message-sender">${data.sender}</span>`: ''}
-                        <button class="message-options" onclick="toggleOptions(${data.message_id})">⋮</button>
+                        <button class="message-options">⋮</button>
                     </div>
                     <div class="message-content">${data.message}</div>
                     <div class="message-timestamp">${data.timestamp}</div>
@@ -128,8 +128,9 @@
                             </div>`;
                 
                 if (data.reply_to_id) {
+                    let replySender = data.reply_to_is_anonymous ? "Anonymous" : data.reply_to_sender;
                     html = `<div class="reply-snippet" onclick="scrollToMessage(${data.reply_to_id})">
-                                <p>${data.reply_to_sender}</p> 
+                                <p class="reply-sender">${replySender}</p> 
                                 <p>${data.reply_to_content}</p>
                             </div>` + html;
                 }
@@ -295,32 +296,32 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            document.querySelectorAll(".message-options").forEach((btn) => {
-                btn.addEventListener("click", (e) => {
+            document.addEventListener("click", (e) => {
+                // Check if the clicked element is a message-options button
+                if (e.target.closest(".message-options")) {
                     e.stopPropagation();
-    
+
                     // Find the closest message element and its corresponding dropdown
-                    const message = btn.closest(".message");
+                    const message = e.target.closest(".message");
                     const dropdown = message.querySelector(".options-dropdown");
-    
+
                     // Close any other open dropdowns
                     document.querySelectorAll(".options-dropdown.active").forEach((openDropdown) => {
                         if (openDropdown !== dropdown) {
                             openDropdown.classList.remove("active");
                         }
                     });
-    
+
                     // Toggle the clicked dropdown
                     dropdown.classList.toggle("active");
-                });
-            });
-    
-            // Close dropdown if clicking outside
-            document.addEventListener("click", () => {
-                document.querySelectorAll(".options-dropdown.active").forEach((dropdown) => {
-                    dropdown.classList.remove("active");
-                });
+                } else {
+                    // Close dropdowns when clicking outside
+                    document.querySelectorAll(".options-dropdown.active").forEach((dropdown) => {
+                        dropdown.classList.remove("active");
+                    });
+                }
             });
         });
+
     </script>
 {% endblock %}
