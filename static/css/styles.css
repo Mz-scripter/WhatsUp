@@ -470,6 +470,7 @@ body {
     left: 0;
     right: 0;
     background-color: #8696a0;
+    opacity: 0.6;
     border-radius: 7.5px;
     margin: 2px 5px;
     padding: 2px 10px;
