@@ -24,32 +24,32 @@ Follow these steps to set up **WhatsUp** locally. You'll need **Python, pip, Git
   ```
 
 ### 2️⃣ Clone the Repository
-    ```
+  ```
     git clone https://github.com/Mz-scripter/WhatsUp.git
     cd WhatsUp
-    ```
+  ```
 
 ### 3️⃣ Set Up a Virtual Environment
-    ```
+  ```
     python -m venv venv
     source venv/Scripts/activate  # On Windows
     source venv/bin/activate  # On macOS/Linux
-    ```
+  ```
 
 ### 4️⃣ Install Dependencies
-    ```
+  ```
     pip install -r requirements.txt
-    ```
+  ```
 
 ### 5️⃣ Set Up the Database
-    ```
+  ```
     python manage.py migrate
-    ```
+  ```
 
 ### 6️⃣ Start the Development Server
-    ```
+  ```
     python manage.py runserver
-    ```
+  ```
 
 
 ## 🚀 Quick Start
